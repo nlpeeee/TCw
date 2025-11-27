@@ -17,6 +17,9 @@
 #include "bsp/board.h"
 #include "tusb.h"
 
+#include "pico/cyw43_arch.h"
+#include "ble_midi_server.h"
+
 #include "Modes/Compose.h"
 #include "Modes/Perform.h"
 #include "Modes/Strum.h"
@@ -262,6 +265,14 @@ int main()
 {
     //stdio_init_all();
     board_init();
+
+    if (cyw43_arch_init())
+    {
+        printf("cyw43_arch_init failed\n");
+        return -1;
+    }
+    ble_midi_server_init(NULL, NULL, 0, IO_CAPABILITY_NO_INPUT_NO_OUTPUT, 0);
+
     sleep_ms(500);
     tud_init(0);
     sleep_ms(500);
@@ -287,12 +298,11 @@ int main()
 
     while (true) {
         tud_task();
-        if (tud_midi_mounted()) 
+        if (tud_midi_mounted())
         {
             poll_buttons();
         }
         led_blinking_task();
-
         serial_poll();
     }
 }

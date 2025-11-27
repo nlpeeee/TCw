@@ -1,6 +1,12 @@
 #include "Midi.h"
 #include "tusb.h"
 #include "hardware/uart.h"
+#include "ble_midi_server.h"
+
+void send_ble_midi(uint8_t* data, uint8_t len)
+{
+    ble_midi_server_stream_write(len, data);
+}
 
 void switch_midi_trs(MidiType type)
 {
@@ -57,6 +63,7 @@ void send_midi_note(uint8_t channel, uint8_t status, uint8_t note, uint8_t veloc
     };
     tud_midi_stream_write(0, packet, 3);
     send_trs_midi(packet, 3);
+    send_ble_midi(packet, 3);
 }
 
 void send_midi_cc(uint8_t channel, uint8_t cc_num, uint8_t cc_value) {
@@ -68,6 +75,7 @@ void send_midi_cc(uint8_t channel, uint8_t cc_num, uint8_t cc_value) {
     };
     tud_midi_stream_write(0, packet, 3);
     send_trs_midi(packet, 3);
+    send_ble_midi(packet, 3);
 }
 
 void send_poly_aftertouch(uint8_t channel, uint8_t note, uint8_t pressure) {
@@ -80,6 +88,7 @@ void send_poly_aftertouch(uint8_t channel, uint8_t note, uint8_t pressure) {
     };
    tud_midi_stream_write(0, packet, 3);
    send_trs_midi(packet, 3);
+   send_ble_midi(packet, 3);
 }
 
 void send_aftertouch(uint8_t channel, uint8_t pressure)
@@ -92,4 +101,5 @@ void send_aftertouch(uint8_t channel, uint8_t pressure)
     };
    tud_midi_stream_write(0, packet, 2);
    send_trs_midi(packet, 2);
+   send_ble_midi(packet, 2);
 }

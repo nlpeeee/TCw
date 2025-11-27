@@ -23,10 +23,10 @@ if (EXISTS ${picoVscode})
     include(${picoVscode})
 endif()
 # ====================================================================================
-set(PICO_BOARD pico2_w CACHE STRING "Board type")
-set(PICO_PLATFORM rp2350)
+set(PICO_BOARD pico_w CACHE STRING "Board type")
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
+set(PICO_SDK_FETCH_FROM_GIT ON)
 include(pico_sdk_import.cmake)
 
 project(Touchord C CXX ASM)
@@ -39,7 +39,8 @@ pico_sdk_init()
 add_executable(Touchord src/Touchord.c src/Globals.c src/usb_descriptors.c
                         src/Modes/Compose.c src/Modes/Strum.c src/Modes/Settings.c src/Modes/Perform.c src/Modes/Omni.c
                         src/Notes/Note.c src/Rendering/Graphics.c src/IO/Midi.c src/Data/Parser.c src/Data/Files.c
-                        src/thirdparty/tiny-json.c src/thirdparty/Fonts.c src/thirdparty/ssd1306.c)
+                        src/thirdparty/tiny-json.c src/thirdparty/Fonts.c src/thirdparty/ssd1306.c
+                        src/thirdparty/ringbuf.c)
                         
                         
 pico_set_program_name(Touchord "Touchord")
@@ -60,14 +61,23 @@ target_link_libraries(Touchord
 target_include_directories(Touchord PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src
         ${CMAKE_CURRENT_LIST_DIR}/src/thirdparty
+        ${CMAKE_CURRENT_LIST_DIR}/src/thirdparty/pico-w-ble-midi-lib
+        ${CMAKE_BINARY_DIR}/_deps/pico_sdk-src/lib/btstack/src
+        ${CMAKE_BINARY_DIR}/_deps/pico_sdk-src/lib/btstack/platform/embedded
+        ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
 # Add any user requested libraries
-target_link_libraries(Touchord 
+target_link_libraries(Touchord
         hardware_spi
         hardware_i2c
-        
+        ble_midi_server_lib
+        ble_midi_client_lib
+        pico_btstack_ble
+        cyw43_driver
+        pico_cyw43_arch_none
         )
 
 pico_add_extra_outputs(Touchord)
+add_subdirectory(src/thirdparty/pico-w-ble-midi-lib)
 
