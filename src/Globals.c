@@ -69,6 +69,8 @@ const TouchordSettings tc_app_default = {
     .arp_gate                    = 1,   // 50%
     .arp_bpm                     = 120,
     .arp_latch                   = true,
+
+    .bass_channel                = 0,
 };
 
 TouchordSettings tc_app;

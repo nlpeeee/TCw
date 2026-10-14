@@ -24,6 +24,8 @@ TCw tracks [dovker/Touchord](https://github.com/dovker/Touchord) (currently v1.0
   - Double-click B1/B2 steps the pattern: Up, Down, Up-Down, Random, Chord.
   - Pattern, rate, range, gate, tempo and latch are also under **Settings > Modes > Arp**.
 - **MIDI clock in** over USB or Bluetooth. The arp locks to the host's beat while it plays and uses its tempo while it is stopped; with no clock it uses the Arp Tempo setting. **Settings > MIDI > Clock In** shows the incoming tempo.
+- **Bass channel** (**Settings > MIDI > Bass**, Off by default). Compose and Arp send the chord root an octave down on that channel; Omni sends its root and fifth there.
+- **Pitch bend and pressure from the touch bar** in Perform: scroll **Pos CC** or **Size CC** past 127 to pick **Bend** or **Press** (channel pressure). Both return to rest when you lift.
 - **Compose Roll** (**Settings > Modes > Compose > Roll**) plays chords from the lowest note up, 10 to 80 ms apart.
 
 ## Building

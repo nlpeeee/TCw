@@ -151,6 +151,8 @@ typedef struct
     uint8_t arp_gate;
     uint8_t arp_bpm;        // tempo when no MIDI clock is coming in
     bool arp_latch;
+
+    uint8_t bass_channel;   // 0 = off, else MIDI channel + 1
 } TouchordSettings;
 
 typedef enum

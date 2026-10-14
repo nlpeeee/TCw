@@ -14,6 +14,32 @@
 #include "Rendering/Graphics.h"
 
 
+// A Pos/Size target is a CC number, Pitch Bend or Channel Pressure.
+static void perform_send(uint8_t target, uint8_t value)
+{
+    switch (target) {
+        case PERFORM_TARGET_BEND:
+            send_pitch_bend(tc_app.channel, (uint16_t)((uint32_t)value * 16383 / 127));
+            break;
+        case PERFORM_TARGET_PRESSURE:
+            send_aftertouch(tc_app.channel, value);
+            break;
+        default:
+            send_midi_cc(tc_app.channel, target, value);
+            break;
+    }
+}
+
+// Bend and pressure always return to rest; CCs return to their default.
+static void perform_reset(uint8_t target, uint8_t cc_default)
+{
+    switch (target) {
+        case PERFORM_TARGET_BEND:     send_pitch_bend(tc_app.channel, 8192); break;
+        case PERFORM_TARGET_PRESSURE: send_aftertouch(tc_app.channel, 0);    break;
+        default:                      send_midi_cc(tc_app.channel, target, cc_default); break;
+    }
+}
+
 static const ModeHandlers perform_handlers = TC_MODE_HANDLERS(perform);
 
 void perform_start()
@@ -26,8 +52,8 @@ void perform_start()
 void perform_end()
 {
     send_midi_chord(tc_app.channel, NOTE_OFF, tc_app.chord, tc_app.extension_count, tc_app.velocity);
-    send_midi_cc(tc_app.channel, tc_app.perform_pos_cc, tc_app.perform_pos_default);
-    send_midi_cc(tc_app.channel, tc_app.perform_size_cc, tc_app.perform_size_default);
+    perform_reset(tc_app.perform_pos_cc,  tc_app.perform_pos_default);
+    perform_reset(tc_app.perform_size_cc, tc_app.perform_size_default);
     tc_app.chord_name[0] = '\0';
 }
 
@@ -99,14 +125,14 @@ void perform_button_up(uint8_t button)
 
 void perform_trill_down(float pos, float size)
 {
-    send_midi_cc(tc_app.channel, tc_app.perform_pos_cc, 127 - (pos * 127));
-    send_midi_cc(tc_app.channel, tc_app.perform_size_cc, (127 - (pos * 127))*size);
+    perform_send(tc_app.perform_pos_cc,  127 - (pos * 127));
+    perform_send(tc_app.perform_size_cc, (127 - (pos * 127))*size);
 }
 
 void perform_trill_up()
 {
-    if(tc_app.perform_reset_pos_on_lift)
-        send_midi_cc(tc_app.channel, tc_app.perform_pos_cc, tc_app.perform_pos_default);
-    if(tc_app.perform_reset_size_on_lift)
-        send_midi_cc(tc_app.channel, tc_app.perform_size_cc, tc_app.perform_size_default);
+    if(tc_app.perform_reset_pos_on_lift || tc_app.perform_pos_cc >= PERFORM_TARGET_BEND)
+        perform_reset(tc_app.perform_pos_cc, tc_app.perform_pos_default);
+    if(tc_app.perform_reset_size_on_lift || tc_app.perform_size_cc >= PERFORM_TARGET_BEND)
+        perform_reset(tc_app.perform_size_cc, tc_app.perform_size_default);
 }

@@ -111,6 +111,8 @@ const char* on_off_sel[2] = {"Off", "On"};
 const char* compose_sel[3] = {"Degree", "Inversion", "Jazz"};
 const char* degree_sel[9] = {"ERR", "Major", "Minor", "Dominant", "Diminished", "Augmented", "Sus2", "Sus4", "ERR"};
 const char* roll_sel[COMPOSE_ROLL_COUNT] = {"Off", "10 ms", "20 ms", "30 ms", "50 ms", "80 ms"};
+const char* bass_sel[17] = {"Off", "Ch 1", "Ch 2", "Ch 3", "Ch 4", "Ch 5", "Ch 6", "Ch 7", "Ch 8",
+                            "Ch 9", "Ch 10", "Ch 11", "Ch 12", "Ch 13", "Ch 14", "Ch 15", "Ch 16"};
 const char* scale_sel[12] = {"ERR", "Major", "Minor", "Dorian", "Phrygian", "Lydian", "Mixolydian", "Locrian", "Custom 0", "Custom 1", "Custom 2", "Custom 3"};
 
 UINode tree[MAX_UI_NODES] = {
@@ -119,11 +121,11 @@ UINode tree[MAX_UI_NODES] = {
 
     // 1-6: First Page
     {"Modes", UI_SUBMENU, 3, 7,  NULL, {0}, NULL},
-    {"MIDI", UI_SUBMENU, 5, 26,  NULL, {0}, NULL},
-    {"Customize", UI_SUBMENU, 7, 31,  NULL, {0}, NULL},
+    {"MIDI", UI_SUBMENU, 6, 26,  NULL, {0}, NULL},
+    {"Customize", UI_SUBMENU, 7, 32,  NULL, {0}, NULL},
     {"Load Preset", UI_INT, 8, 0, trigger_load_preset, {.i_val = &preset_slot_load}, NULL},
     {"Save Preset", UI_INT, 8, 0, trigger_save_preset, {.i_val = &preset_slot_save}, NULL},
-    {"Firmware", UI_SUBMENU, 2, 52, NULL, {0}, NULL},
+    {"Firmware", UI_SUBMENU, 2, 53, NULL, {0}, NULL},
 
     // 7-9: Modes Settings
     {"Compose", UI_SUBMENU, 4, 10, NULL, {0}, NULL},
@@ -137,8 +139,8 @@ UINode tree[MAX_UI_NODES] = {
     {"Roll",       UI_ENUM,   COMPOSE_ROLL_COUNT, 0, NULL, {.en_val=&tc_app.compose_roll}, roll_sel},
 
     // 14-19: Modes.Perform Settings
-    {"Pos CC", UI_INT, 128, 0, NULL, {.i_val=&tc_app.perform_pos_cc}, NULL},
-    {"Size CC", UI_INT, 128, 0, NULL, {.i_val=&tc_app.perform_size_cc}, NULL},
+    {"Pos CC", UI_INT, PERFORM_TARGET_COUNT, 0, NULL, {.i_val=&tc_app.perform_pos_cc}, NULL},
+    {"Size CC", UI_INT, PERFORM_TARGET_COUNT, 0, NULL, {.i_val=&tc_app.perform_size_cc}, NULL},
     {"Pos Default", UI_INT, 128, 0, NULL, {.i_val=&tc_app.perform_pos_default}, NULL},
     {"Size Default", UI_INT, 128, 0, NULL, {.i_val=&tc_app.perform_size_default}, NULL},
     {"Pos Keep", UI_TOGGLE, 2, 0, NULL, {.toggle=&tc_app.perform_reset_pos_on_lift}, on_off_sel},
@@ -152,47 +154,48 @@ UINode tree[MAX_UI_NODES] = {
     {"Tempo",   UI_INT,    241,              40, NULL, {.i_val=&tc_app.arp_bpm},      NULL},
     {"Latch",   UI_TOGGLE, 2,                 0, NULL, {.toggle=&tc_app.arp_latch},   on_off_sel},
 
-    // 26-30: MIDI Settings
+    // 26-31: MIDI Settings
     {"Channel", UI_INT, 16, 0, NULL,  {.i_val=&tc_app.channel}, NULL},
     {"TRS Midi", UI_ENUM, 2, 0, trigger_midi_type, {.en_val=&tc_app.midi_type}, trs_midi_sel},
     {"Velocity", UI_INT, 128, 0, NULL, {.i_val=&tc_app.velocity}, NULL},
     {"Bluetooth", UI_TOGGLE, 2, 0, NULL, {.toggle=&tc_app.bluetooth}, on_off_sel},
     {"Clock In", UI_TOGGLE, 2, 0, NULL, {.toggle=&tc_app.clock_in}, on_off_sel},
+    {"Bass", UI_ENUM, 17, 0, NULL, {.en_val=&tc_app.bass_channel}, bass_sel},
 
-    // 31-33 Customize (Buttons)
-    {"Button 1", UI_SUBMENU, 2, 38, NULL, {0}, NULL},
-    {"Button 2", UI_SUBMENU, 2, 40, NULL, {0}, NULL},
-    {"Button 3", UI_SUBMENU, 2, 42, NULL, {0}, NULL},
-    // 34-37 Customize (Custom Scales)
-    {"Custom 0", UI_SUBMENU, 2, 44, NULL, {0}, NULL},
-    {"Custom 1", UI_SUBMENU, 2, 46, NULL, {0}, NULL},
-    {"Custom 2", UI_SUBMENU, 2, 48, NULL, {0}, NULL},
-    {"Custom 3", UI_SUBMENU, 2, 50, NULL, {0}, NULL},
+    // 32-34 Customize (Buttons)
+    {"Button 1", UI_SUBMENU, 2, 39, NULL, {0}, NULL},
+    {"Button 2", UI_SUBMENU, 2, 41, NULL, {0}, NULL},
+    {"Button 3", UI_SUBMENU, 2, 43, NULL, {0}, NULL},
+    // 35-38 Customize (Custom Scales)
+    {"Custom 0", UI_SUBMENU, 2, 45, NULL, {0}, NULL},
+    {"Custom 1", UI_SUBMENU, 2, 47, NULL, {0}, NULL},
+    {"Custom 2", UI_SUBMENU, 2, 49, NULL, {0}, NULL},
+    {"Custom 3", UI_SUBMENU, 2, 51, NULL, {0}, NULL},
 
-    // 38-39 Customize.B1
+    // 39-40 Customize.B1
     {"Root", UI_ENUM, 17, 0, NULL, {.en_val = &tc_app.key[0].root}, root_names},
     {"Scale", UI_ENUM, 12, 1, NULL, {.en_val = &tc_app.key[0].quality}, scale_sel},
-    // 40-41 Customize.B2
+    // 41-42 Customize.B2
     {"Root", UI_ENUM, 17, 0, NULL, {.en_val = &tc_app.key[1].root}, root_names},
     {"Scale", UI_ENUM, 12, 1, NULL, {.en_val = &tc_app.key[1].quality}, scale_sel},
-    // 42-43 Customize.B3
+    // 43-44 Customize.B3
     {"Root", UI_ENUM, 17, 0, NULL, {.en_val = &tc_app.key[2].root}, root_names},
     {"Scale", UI_ENUM, 12, 1, NULL, {.en_val = &tc_app.key[2].quality}, scale_sel},
 
-    // 44-45 Customize.C0
+    // 45-46 Customize.C0
     {"Intervals", UI_PER_BUTTON_INT,  12, 0, trigger_custom_scale, {.i_val  = tc_app.custom_scale_intervals[0]}, NULL},
     {"Degrees",   UI_PER_BUTTON_ENUM, 7,  1, trigger_custom_scale, {.en_val = tc_app.custom_scale_chords[0]},    degree_sel},
-    // 46-47 Customize.C1
+    // 47-48 Customize.C1
     {"Intervals", UI_PER_BUTTON_INT,  12, 0, trigger_custom_scale, {.i_val  = tc_app.custom_scale_intervals[1]}, NULL},
     {"Degrees",   UI_PER_BUTTON_ENUM, 7,  1, trigger_custom_scale, {.en_val = tc_app.custom_scale_chords[1]},    degree_sel},
-    // 48-49 Customize.C2
+    // 49-50 Customize.C2
     {"Intervals", UI_PER_BUTTON_INT,  12, 0, trigger_custom_scale, {.i_val  = tc_app.custom_scale_intervals[2]}, NULL},
     {"Degrees",   UI_PER_BUTTON_ENUM, 7,  1, trigger_custom_scale, {.en_val = tc_app.custom_scale_chords[2]},    degree_sel},
-    // 50-51 Customize.C3
+    // 51-52 Customize.C3
     {"Intervals", UI_PER_BUTTON_INT,  12, 0, trigger_custom_scale, {.i_val  = tc_app.custom_scale_intervals[3]}, NULL},
     {"Degrees",   UI_PER_BUTTON_ENUM, 7,  1, trigger_custom_scale, {.en_val = tc_app.custom_scale_chords[3]},    degree_sel},
 
-    // 52-53: Firmware
+    // 53-54: Firmware
     {"Reset Factory",   UI_TRIGGER, 0, 0, trigger_factory_reset, {0}, NULL},
     {"Firmware Update", UI_TRIGGER, 0, 0, trigger_boot_sel,      {0}, NULL},
 };
@@ -248,6 +251,11 @@ void settings_draw()
                 draw_string_center(cn->opts[*cn->data.en_val]);
         break;
         case UI_INT:
+            if (cn->data.i_val == &tc_app.perform_pos_cc || cn->data.i_val == &tc_app.perform_size_cc) {
+                // Past CC 127 come Pitch Bend and Channel Pressure
+                if (*cn->data.i_val == PERFORM_TARGET_BEND)     { draw_string_center("Bend");  break; }
+                if (*cn->data.i_val == PERFORM_TARGET_PRESSURE) { draw_string_center("Press"); break; }
+            }
             if(cn->data.i_val)
                 draw_int_center(*cn->data.i_val);
         break;

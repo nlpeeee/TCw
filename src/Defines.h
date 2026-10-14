@@ -15,6 +15,10 @@
 #define MIDI_NOTE 60
 #define MIDI_CUTOFF 74
 #define MIDI_MOD 1
+// Perform Pos/Size targets past the 0-127 CC numbers
+#define PERFORM_TARGET_BEND     128
+#define PERFORM_TARGET_PRESSURE 129
+#define PERFORM_TARGET_COUNT    130
 
 #define MIDI_PIN_IN_1 18
 #define MIDI_PIN_IN_2 19

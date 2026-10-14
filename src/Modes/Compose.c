@@ -81,6 +81,22 @@ static void send_chord_rolled(const uint8_t *prev, const uint8_t *curr, uint32_t
                    tc_app.velocity, SCHED_TAG_COMPOSE);
 }
 
+// Root of the sounding chord for the bass channel, in root position so
+// Inversion mode doesn't move the bass.
+static void compose_update_bass(void)
+{
+    if (compose_last_degree >= NUM_KEYS) return;   // sustained chord, key already up
+    if (tc_app.compose_type == COMPOSE_JAZZ && trill_jazz_seg >= 0) {
+        bass_play(tc_app.chord[0]);
+        return;
+    }
+    uint8_t root_pos[MAX_CHORD];
+    char    name[CHORD_NAME_LEN];
+    build_chord(tc_app.key[tc_app.current_key], tc_app.octave, compose_last_degree, tc_app.degree,
+                compose_extension, 0, root_pos, name);
+    bass_play(root_pos[0]);
+}
+
 static const ModeHandlers compose_handlers = TC_MODE_HANDLERS(compose);
 
 void compose_start()
@@ -99,6 +115,7 @@ void compose_start()
 void compose_end()
 {
     sched_cancel(SCHED_TAG_COMPOSE);
+    bass_stop();
     send_midi_chord(tc_app.channel, NOTE_OFF, tc_app.chord, compose_last_extension, tc_app.velocity);
     tc_app.chord_name[0]  = '\0';
     tc_compose_tooltip[0] = '\0';
@@ -136,6 +153,7 @@ void compose_key_down(uint8_t key)
     else
         send_midi_chord_diff(prev_chord, tc_app.chord, tc_app.channel, tc_app.velocity, true);
     compose_last_extension = compose_extension;
+    compose_update_bass();
 
     prev_seg = -1;
     critical_section_exit(&tc_app_lock);
@@ -149,6 +167,7 @@ void compose_key_up(uint8_t key)
     compose_last_degree = -1;
     if (!tc_app.compose_sustain) {
         sched_cancel(SCHED_TAG_COMPOSE);
+        bass_stop();
         send_midi_chord(tc_app.channel, NOTE_OFF, tc_app.chord, compose_last_extension, tc_app.velocity);
         build_chord(tc_app.key[tc_app.current_key], tc_app.octave, 0, CHORD_DEFAULT,
                     0, tc_app.inversion, tc_app.chord, tc_app.chord_name);
@@ -236,6 +255,7 @@ void compose_trill_down(float pos, float size)
     send_midi_chord_diff(prev_chord, tc_app.chord, tc_app.channel, tc_app.velocity,
                tc_app.compose_voice_lead);
     compose_last_extension = compose_extension;
+    compose_update_bass();
     prev_seg = seg;
     critical_section_exit(&tc_app_lock);
 }
@@ -265,6 +285,7 @@ void compose_trill_up()
         send_midi_chord_diff(prev_chord, tc_app.chord, tc_app.channel, tc_app.velocity,
                    tc_app.compose_voice_lead);
         compose_last_extension = compose_extension;
+        compose_update_bass();
     }
     critical_section_exit(&tc_app_lock);
 }
