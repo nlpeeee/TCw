@@ -16,6 +16,13 @@
 #define FLASH_STORAGE_SECTORS 2
 #define FLASH_TARGET_OFFSET (PICO_FLASH_SIZE_BYTES - (FLASH_SECTOR_SIZE * FLASH_STORAGE_SECTORS))
 
+#if TOUCHORD_BLE
+// BTstack keeps Bluetooth pairings in its own flash bank; it must sit below the presets.
+#include "pico/btstack_flash_bank.h"
+_Static_assert(PICO_FLASH_BANK_STORAGE_OFFSET + PICO_FLASH_BANK_TOTAL_SIZE <= FLASH_TARGET_OFFSET,
+               "Bluetooth pairing storage overlaps the preset sectors");
+#endif
+
 static const uint8_t* flash_preset_base(void)
 {
     return (const uint8_t*)(XIP_BASE + FLASH_TARGET_OFFSET);

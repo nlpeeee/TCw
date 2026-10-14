@@ -19,6 +19,7 @@
 #include "Helper.h"
 #include "Globals.h"
 #include "IO/Midi.h"
+#include "IO/BleMidi.h"
 #include "Data/Flash.h"
 #include "Notes/Note.h"
 #include "Sync.h"
@@ -37,6 +38,11 @@
 
 void led_blinking_task(void);
 static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
+
+#define BUTTON_POLL_MS 10
+
+// Set by core 1 once it can be paused for flash writes (see io_task).
+static volatile bool core1_lockout_ready = false;
 
 void poll_buttons()
 {
@@ -82,7 +88,6 @@ void poll_buttons()
         }
         tc_key_states[i] = curr_state;
     }
-    sleep_ms(10);
 }
 
 void poll_trill_bar(TrillBar* bar)
@@ -119,8 +124,11 @@ void init_GPIO()
 {
     init_input_bank(CONTROL_0, NUM_CONTROLS, tc_control_states);
     init_input_bank(KEY_0,     NUM_KEYS,     tc_key_states);
+#ifndef CYW43_WL_GPIO_LED_PIN
+    // On the W boards GPIO25 is the radio's SPI chip select, not the LED.
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
+#endif
 }
 
 void init_i2c()
@@ -167,6 +175,7 @@ void select_mode(TouchordMode mode)
 void io_task()
 {
     multicore_lockout_victim_init();
+    core1_lockout_ready = true;
 
     init_i2c();
     setup_midi_trs(tc_app.midi_type);
@@ -251,12 +260,29 @@ int main()
     reload_custom_scales();
     compose_start();
 
-    tud_init(0);
+    midi_out_init();
     multicore_launch_core1(io_task);
 
+    // The radio is brought up before USB so the host never waits on an
+    // attached-but-silent device. BTstack may write its pairing store during
+    // bring-up, and flash writes need core 1 pausable first.
+    while (!core1_lockout_ready) tight_loop_contents();
+    ble_midi_init();
+
+    tud_init(0);
+
+    absolute_time_t next_button_poll = get_absolute_time();
     while (true) {
         tud_task();
-        if (tud_midi_mounted()) poll_buttons();
+        ble_midi_task();
+
+        if ((tud_midi_mounted() || ble_midi_is_connected())
+            && time_reached(next_button_poll)) {
+            poll_buttons();
+            next_button_poll = make_timeout_time_ms(BUTTON_POLL_MS);
+        }
+
+        midi_out_task();
         led_blinking_task();
     }
 }
@@ -271,9 +297,16 @@ void led_blinking_task(void)
     static uint32_t start_ms = 0;
     static bool led_state = false;
 
-    if (board_millis() - start_ms < blink_interval_ms) return;
-    start_ms += blink_interval_ms;
+    uint32_t interval = blink_interval_ms;
+    if (interval == BLINK_NOT_MOUNTED && ble_midi_is_connected()) interval = BLINK_MOUNTED;
 
+    if (board_millis() - start_ms < interval) return;
+    start_ms += interval;
+
+#ifdef CYW43_WL_GPIO_LED_PIN
+    ble_midi_led_write(led_state);
+#else
     board_led_write(led_state);
+#endif
     led_state = !led_state;
 }

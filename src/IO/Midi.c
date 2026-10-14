@@ -7,8 +7,63 @@
  */
 
 #include "Midi.h"
+#include "BleMidi.h"
 #include "tusb.h"
 #include "hardware/uart.h"
+#include "pico/util/queue.h"
+#include <string.h>
+
+// Every outgoing message goes through this queue and is sent by core 0 in
+// midi_out_task(). Modes send from both cores (keys on core 0, trill on
+// core 1), but TinyUSB, the TRS UART and BTstack must not be driven from
+// two cores at once.
+typedef struct {
+    uint8_t len;
+    uint8_t data[3];
+} MidiMsg;
+
+#define MIDI_OUT_QUEUE_LEN    256
+#define MIDI_OUT_CORE1_WAIT_US 50000
+
+static queue_t midi_out_queue;
+
+void midi_out_init(void)
+{
+    queue_init(&midi_out_queue, sizeof(MidiMsg), MIDI_OUT_QUEUE_LEN);
+}
+
+static void midi_out_emit(const MidiMsg *m)
+{
+    tud_midi_stream_write(0, m->data, m->len);
+    send_trs_midi((uint8_t *)m->data, m->len);
+    ble_midi_send(m->data, m->len);
+}
+
+void midi_out_task(void)
+{
+    MidiMsg m;
+    while (queue_try_remove(&midi_out_queue, &m))
+        midi_out_emit(&m);
+}
+
+static void midi_out_send(const uint8_t *data, uint8_t len)
+{
+    MidiMsg m = { .len = len };
+    memcpy(m.data, data, len);
+    if (queue_try_add(&midi_out_queue, &m)) return;
+
+    if (get_core_num() == 0) {
+        // Core 0 is the consumer, so make room rather than wait on itself.
+        midi_out_task();
+        queue_add_blocking(&midi_out_queue, &m);
+        return;
+    }
+    // Core 1 may hold tc_app_lock while core 0 waits on it, so never block
+    // forever here; drop the message if core 0 can't drain in time.
+    absolute_time_t until = make_timeout_time_us(MIDI_OUT_CORE1_WAIT_US);
+    while (!queue_try_add(&midi_out_queue, &m))
+        if (time_reached(until)) return;
+}
 
 void switch_midi_trs(MidiType type)
 {
@@ -38,7 +93,7 @@ void setup_midi_trs(MidiType type)
     gpio_set_function(MIDI_PIN_DAT, GPIO_FUNC_UART); //MIDI_PIN_DAT is TX pin
     uart_set_hw_flow(uart1, false, false);
     uart_set_format(uart1, 8, 1, UART_PARITY_NONE);
-    uart_set_fifo_enabled(uart1, false);
+    uart_set_fifo_enabled(uart1, true); // 32-byte FIFO: a chord no longer blocks core 0 byte by byte
 }
 
 void send_trs_midi(uint8_t* data, uint8_t len)
@@ -91,8 +146,7 @@ void send_midi_note(uint8_t channel, uint8_t status, uint8_t note, uint8_t veloc
         note,
         velocity
     };
-    tud_midi_stream_write(0, packet, 3);
-    send_trs_midi(packet, 3);
+    midi_out_send(packet, 3);
 }
 
 void send_midi_cc(uint8_t channel, uint8_t cc_num, uint8_t cc_value) {
@@ -102,8 +156,7 @@ void send_midi_cc(uint8_t channel, uint8_t cc_num, uint8_t cc_value) {
         cc_num,
         cc_value
     };
-    tud_midi_stream_write(0, packet, 3);
-    send_trs_midi(packet, 3);
+    midi_out_send(packet, 3);
 }
 
 void send_poly_aftertouch(uint8_t channel, uint8_t note, uint8_t pressure) {
@@ -114,8 +167,7 @@ void send_poly_aftertouch(uint8_t channel, uint8_t note, uint8_t pressure) {
         note,
         pressure
     };
-   tud_midi_stream_write(0, packet, 3);
-   send_trs_midi(packet, 3);
+    midi_out_send(packet, 3);
 }
 
 void send_aftertouch(uint8_t channel, uint8_t pressure)
@@ -126,6 +178,5 @@ void send_aftertouch(uint8_t channel, uint8_t pressure)
         status,
         pressure
     };
-   tud_midi_stream_write(0, packet, 2);
-   send_trs_midi(packet, 2);
+    midi_out_send(packet, 2);
 }

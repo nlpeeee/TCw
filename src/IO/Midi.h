@@ -14,6 +14,10 @@
 #include "Defines.h"
 #include "Types.h"
 
+// Outgoing MIDI is queued from either core and sent from core 0.
+void midi_out_init(void);
+void midi_out_task(void);
+
 void switch_midi_trs(MidiType type);
 void setup_midi_trs(MidiType type);
 void send_trs_midi(uint8_t* data, uint8_t len);

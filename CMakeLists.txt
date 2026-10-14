@@ -23,7 +23,9 @@ if (EXISTS ${picoVscode})
     include(${picoVscode})
 endif()
 # ====================================================================================
-set(PICO_BOARD pico2 CACHE STRING "Board type")
+# TCw targets the Raspberry Pi Pico 2 W. Building for a non-W board
+# (e.g. -DPICO_BOARD=pico2) leaves Bluetooth out.
+set(PICO_BOARD pico2_w CACHE STRING "Board type")
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
@@ -58,6 +60,19 @@ set(TOUCHORD_SOURCES
     src/thirdparty/Fonts.c src/thirdparty/ssd1306.c
 )
 
+# Bluetooth LE MIDI needs the CYW43 radio on the W boards.
+if (PICO_CYW43_SUPPORTED)
+    option(TOUCHORD_BLE "Bluetooth LE MIDI" ON)
+else()
+    set(TOUCHORD_BLE OFF)
+endif()
+
+if (TOUCHORD_BLE)
+    add_subdirectory(lib/ring_buffer_lib)
+    add_subdirectory(lib/pico-w-ble-midi-lib)
+    list(APPEND TOUCHORD_SOURCES src/IO/BleMidi.c)
+endif()
+
 # Two firmware variants share the same source list and only differ in the
 # TOUCHORD_DUAL_I2C compile definition. Both build by default so users with
 # either hardware revision can grab the matching .uf2 from build/.
@@ -86,6 +101,26 @@ function(touchord_add_variant target dual_i2c)
         ${CMAKE_CURRENT_LIST_DIR}/src/thirdparty)
 
     target_compile_definitions(${target} PRIVATE TOUCHORD_DUAL_I2C=${dual_i2c})
+
+    if (TOUCHORD_BLE)
+        target_link_libraries(${target}
+            pico_cyw43_arch_none
+            pico_btstack_ble
+            pico_btstack_cyw43
+            ble_midi_server_lib)
+        pico_btstack_make_gatt_header(${target} PRIVATE
+            "${CMAKE_CURRENT_LIST_DIR}/src/IO/touchord_gatt.gatt"
+            "${CMAKE_CURRENT_LIST_DIR}/lib/pico-w-ble-midi-lib")
+        target_compile_definitions(${target} PRIVATE
+            TOUCHORD_BLE=1
+            # BTstack + micro-ecc need more than the default 2 KB core 0 stack
+            PICO_STACK_SIZE=0x1000
+            # Keep the pairing store clear of the presets in the last two
+            # sectors (src/Data/Flash.c); the SDK default overlaps them.
+            PICO_FLASH_BANK_STORAGE_OFFSET=\(PICO_FLASH_SIZE_BYTES-4*4096\))
+    else()
+        target_compile_definitions(${target} PRIVATE TOUCHORD_BLE=0)
+    endif()
 
     pico_add_extra_outputs(${target})
 endfunction()

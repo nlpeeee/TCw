@@ -138,6 +138,8 @@ typedef struct
     uint8_t perform_size_default;
     bool perform_reset_pos_on_lift;
     bool perform_reset_size_on_lift;
+
+    bool bluetooth;
 } TouchordSettings;
 
 typedef enum

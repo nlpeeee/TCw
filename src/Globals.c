@@ -57,6 +57,8 @@ const TouchordSettings tc_app_default = {
     .perform_size_default        = 0,
     .perform_reset_pos_on_lift   = false,
     .perform_reset_size_on_lift  = true,
+
+    .bluetooth                   = true,
 };
 
 TouchordSettings tc_app;

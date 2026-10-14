@@ -52,6 +52,8 @@
 #define TRILL_ADDR 0x20
 #define DISP_ADDR 0x3C
 
+#define BLE_DEVICE_NAME_LEN 8   // "Touchord", advertised in the scan response
+
 #define LED_PIN 25
 #define CONTROL_0 1
 #define CONTROL_1 2
