@@ -24,6 +24,7 @@
 #include "Timing/MidiClock.h"
 #include "Data/Flash.h"
 #include "Notes/Note.h"
+#include "Notes/ChordSets.h"
 #include "Sync.h"
 #include "Rendering/Graphics.h"
 #include "Rendering/ScreenDma.h"
@@ -161,7 +162,7 @@ static bool key_root_slide(float pos, bool touching)
         tc_app.key[slot].root = root;
         char msg[24];
         snprintf(msg, sizeof msg, "Key %d: %s %s", slot + 1, root_names[root],
-                 scale_names[tc_app.key[slot].quality]);
+                 key_scale_name(tc_app.key[slot]));
         trigger_overlay(msg, 800);
     }
     return true;

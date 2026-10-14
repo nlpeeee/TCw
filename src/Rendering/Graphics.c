@@ -11,6 +11,7 @@
 #include "font.h"
 #include "Globals.h"
 #include "Notes/Note.h"
+#include "Notes/ChordSets.h"
 #include "version.h"
 #include <stdlib.h>
 #include <string.h>
@@ -21,7 +22,7 @@ void draw_current_chord_ex(uint8_t octave_span)
     ssd1306_draw_string(&tc_disp, 64 - text_w, 24, 2, tc_app.chord_name);
 
     const char *root  = root_names[tc_app.key[tc_app.current_key].root];
-    const char *scale = scale_names[tc_app.key[tc_app.current_key].quality];
+    const char *scale = key_scale_name(tc_app.key[tc_app.current_key]);
     uint8_t rl = strlen(root);
     uint8_t ql = strlen(scale);
     uint8_t header_w = 8 + 2 + rl * 6 + 2 + ql * 6 - 1;
