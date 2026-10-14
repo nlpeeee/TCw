@@ -21,6 +21,19 @@
 
 static float bend_start_pos = 0.5f;
 
+// Last value sent per axis (type in the top bits), so a still finger doesn't
+// resend the same message on every poll of the bar.
+#define PERFORM_NOTHING_SENT 0xFFFFFFFFu
+static uint32_t last_sent[2] = { PERFORM_NOTHING_SENT, PERFORM_NOTHING_SENT };
+
+static bool changed(int axis, uint8_t type, uint32_t value)
+{
+    uint32_t key = ((uint32_t)type << 16) | value;
+    if (last_sent[axis] == key) return false;
+    last_sent[axis] = key;
+    return true;
+}
+
 static uint8_t to_midi7(float v)
 {
     if (v < 0.0f)   return 0;
@@ -29,9 +42,10 @@ static uint8_t to_midi7(float v)
 }
 
 // Each axis sends its CC, pitch bend or channel pressure. value is the
-// axis's 0-127 reading; is_pos marks the position axis.
-static void perform_send(uint8_t type, uint8_t cc, float value, bool is_pos, float pos)
+// axis's 0-127 reading; axis 0 is position, 1 is size.
+static void perform_send(int axis, uint8_t type, uint8_t cc, float value, float pos)
 {
+    bool is_pos = axis == 0;
     switch (type) {
         case PERFORM_BEND: {
             // Position bends relative to where the finger landed, so touching
@@ -39,21 +53,24 @@ static void perform_send(uint8_t type, uint8_t cc, float value, bool is_pos, flo
             float b = is_pos ? (bend_start_pos - pos) * 2.0f : (value / 127.0f) * 2.0f - 1.0f;
             if (b < -1.0f) b = -1.0f;
             if (b >  1.0f) b =  1.0f;
-            send_pitch_bend(tc_app.channel, (uint16_t)(8192 + b * 8191));
+            uint16_t v = (uint16_t)(8192 + b * 8191);
+            if (changed(axis, type, v)) send_pitch_bend(tc_app.channel, v);
         } break;
-        case PERFORM_PRESSURE:
-            send_aftertouch(tc_app.channel,
-                to_midi7((tc_trill_strength - PRESS_MIN) * 127.0f / (PRESS_MAX - PRESS_MIN)));
-            break;
-        default:
-            send_midi_cc(tc_app.channel, cc, to_midi7(value));
-            break;
+        case PERFORM_PRESSURE: {
+            uint8_t v = to_midi7((tc_trill_strength - PRESS_MIN) * 127.0f / (PRESS_MAX - PRESS_MIN));
+            if (changed(axis, type, v)) send_aftertouch(tc_app.channel, v);
+        } break;
+        default: {
+            uint8_t v = to_midi7(value);
+            if (changed(axis, type, ((uint32_t)cc << 8) | v)) send_midi_cc(tc_app.channel, cc, v);
+        } break;
     }
 }
 
 // Bend and pressure always return to rest; CCs return to their default.
 static void perform_reset(uint8_t type, uint8_t cc, uint8_t cc_default)
 {
+    last_sent[0] = last_sent[1] = PERFORM_NOTHING_SENT;
     switch (type) {
         case PERFORM_BEND:     send_pitch_bend(tc_app.channel, 8192); break;
         case PERFORM_PRESSURE: send_aftertouch(tc_app.channel, 0);    break;
@@ -146,9 +163,12 @@ void perform_button_up(uint8_t button)
 
 void perform_trill_down(float pos, float size)
 {
-    if (!tc_touch_state) bend_start_pos = pos;
-    perform_send(tc_app.perform_pos_type,  tc_app.perform_pos_cc,  127 - (pos * 127),          true,  pos);
-    perform_send(tc_app.perform_size_type, tc_app.perform_size_cc, (127 - (pos * 127)) * size, false, pos);
+    if (!tc_touch_state) {
+        bend_start_pos = pos;
+        last_sent[0] = last_sent[1] = PERFORM_NOTHING_SENT;
+    }
+    perform_send(0, tc_app.perform_pos_type,  tc_app.perform_pos_cc,  127 - (pos * 127),          pos);
+    perform_send(1, tc_app.perform_size_type, tc_app.perform_size_cc, (127 - (pos * 127)) * size, pos);
 }
 
 void perform_trill_up()
