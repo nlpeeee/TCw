@@ -43,6 +43,7 @@ typedef enum
 typedef enum
 {
     TOUCHORD_COMPOSE = 0,
+    TOUCHORD_ARP,
     TOUCHORD_PERFORM,
     TOUCHORD_STRUM,
     TOUCHORD_OMNI,
@@ -152,6 +153,13 @@ typedef struct
 
     bool clock_in;          // follow MIDI clock from USB or Bluetooth
     uint8_t compose_roll;   // index into compose_roll_ms[], 0 = all notes at once
+
+    uint8_t arp_pattern;    // indices into the arp_*_names[] tables in Modes/Arp.c
+    uint8_t arp_rate;
+    uint8_t arp_octaves;    // range minus one
+    uint8_t arp_gate;
+    uint8_t arp_bpm;        // tempo when no MIDI clock is coming in
+    bool arp_latch;
 } TouchordSettings;
 
 typedef enum

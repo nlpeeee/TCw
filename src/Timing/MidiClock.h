@@ -32,6 +32,7 @@ void midi_clock_task(void);
 bool     midi_clock_present(void);    // ticks arrived recently
 bool     midi_clock_running(void);    // between Start/Continue and Stop
 uint32_t midi_clock_bpm(void);        // 0 when no clock
+uint32_t midi_clock_tick_us(void);    // average tick length, 0 when no clock
 uint32_t midi_clock_ticks(void);      // ticks since Start, 24 per beat
 void     midi_clock_status(char *buf, uint32_t len);
 
