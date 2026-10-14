@@ -43,6 +43,9 @@ static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 
 #define BUTTON_POLL_MS 10
 
+// Holding B0 this long jumps to Settings; a shorter press fires on release.
+#define B0_HOLD_MS 600
+
 // Set by core 1 once it can be paused for flash writes (see io_task).
 static volatile bool core1_lockout_ready = false;
 
@@ -54,6 +57,27 @@ static void flush_pending_click(void)
     tc_last_control_clicks = 0;
 }
 
+// B0 cycles modes on a short press and opens Settings when held. Its press
+// is held back until release (or the hold time) so the two don't collide.
+static uint64_t b0_down_time = 0;
+static bool b0_held = false;
+
+static void poll_b0(bool curr_state, uint64_t now)
+{
+    if (tc_control_states[0] && !curr_state) {
+        flush_pending_click();
+        b0_down_time = now;
+        b0_held = false;
+    } else if (!tc_control_states[0] && curr_state) {
+        if (!b0_held) tc_button_down(0);
+        tc_button_up(0);
+    } else if (!curr_state && !b0_held && now - b0_down_time >= B0_HOLD_MS) {
+        b0_held = true;
+        if (tc_app_get_mode() != TOUCHORD_SETTINGS)
+            tc_app_set_mode(TOUCHORD_SETTINGS);
+    }
+}
+
 void poll_buttons()
 {
     uint64_t now = to_ms_since_boot(get_absolute_time());
@@ -62,7 +86,9 @@ void poll_buttons()
 
     for (int i = 0; i < NUM_CONTROLS; i++) {
         bool curr_state = gpio_get(i + CONTROL_0);
-        if (tc_control_states[i] && !curr_state) {
+        if (i == 0) {
+            poll_b0(curr_state, now);
+        } else if (tc_control_states[i] && !curr_state) {
             // Another button settles a pending click first, so it is neither
             // lost nor replayed as this button.
             if (tc_control_double_click[i]) {
