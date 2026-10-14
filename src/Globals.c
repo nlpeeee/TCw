@@ -122,6 +122,7 @@ uint8_t tc_last_key = 0;
 uint8_t tc_last_control = 0;
 
 float   tc_trill_pos = 0.0f;
+float   tc_trill_strength = 0.0f;
 uint8_t tc_trill_segs = 0;
 bool    tc_trill_show = true;
 

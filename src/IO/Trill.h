@@ -68,6 +68,7 @@ void trill_set_scan_settings(TrillBar* bar, uint8_t speed, uint8_t resolution);
 void trill_touches(TrillBar* bar, Touch touches[TRILL_MAX_TOUCHES], uint8_t* count);
 float trill_calculate_touch(TrillBar* bar);
 float trill_calculate_size(TrillBar* bar, float pos);
+float trill_calculate_strength(TrillBar* bar);
 TrillBar trill_init(i2c_inst_t *i2c_i, uint8_t address);
 
 #endif // TRILL_BAR_H

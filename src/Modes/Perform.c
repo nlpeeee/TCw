@@ -14,18 +14,39 @@
 #include "Rendering/Graphics.h"
 
 
-// Each axis sends its CC, pitch bend or channel pressure.
-static void perform_send(uint8_t type, uint8_t cc, uint8_t value)
+// Pressure from touch strength, so it doesn't depend on where the finger is.
+// A light touch sums to about PRESS_MIN, a firm flat fingertip to PRESS_MAX.
+#define PRESS_MIN 0.5f
+#define PRESS_MAX 2.5f
+
+static float bend_start_pos = 0.5f;
+
+static uint8_t to_midi7(float v)
+{
+    if (v < 0.0f)   return 0;
+    if (v > 127.0f) return 127;
+    return (uint8_t)v;
+}
+
+// Each axis sends its CC, pitch bend or channel pressure. value is the
+// axis's 0-127 reading; is_pos marks the position axis.
+static void perform_send(uint8_t type, uint8_t cc, float value, bool is_pos, float pos)
 {
     switch (type) {
-        case PERFORM_BEND:
-            send_pitch_bend(tc_app.channel, (uint16_t)((uint32_t)value * 16383 / 127));
-            break;
+        case PERFORM_BEND: {
+            // Position bends relative to where the finger landed, so touching
+            // down never jumps; half the bar is a full bend.
+            float b = is_pos ? (bend_start_pos - pos) * 2.0f : (value / 127.0f) * 2.0f - 1.0f;
+            if (b < -1.0f) b = -1.0f;
+            if (b >  1.0f) b =  1.0f;
+            send_pitch_bend(tc_app.channel, (uint16_t)(8192 + b * 8191));
+        } break;
         case PERFORM_PRESSURE:
-            send_aftertouch(tc_app.channel, value);
+            send_aftertouch(tc_app.channel,
+                to_midi7((tc_trill_strength - PRESS_MIN) * 127.0f / (PRESS_MAX - PRESS_MIN)));
             break;
         default:
-            send_midi_cc(tc_app.channel, cc, value);
+            send_midi_cc(tc_app.channel, cc, to_midi7(value));
             break;
     }
 }
@@ -125,8 +146,9 @@ void perform_button_up(uint8_t button)
 
 void perform_trill_down(float pos, float size)
 {
-    perform_send(tc_app.perform_pos_type,  tc_app.perform_pos_cc,  127 - (pos * 127));
-    perform_send(tc_app.perform_size_type, tc_app.perform_size_cc, (127 - (pos * 127))*size);
+    if (!tc_touch_state) bend_start_pos = pos;
+    perform_send(tc_app.perform_pos_type,  tc_app.perform_pos_cc,  127 - (pos * 127),          true,  pos);
+    perform_send(tc_app.perform_size_type, tc_app.perform_size_cc, (127 - (pos * 127)) * size, false, pos);
 }
 
 void perform_trill_up()

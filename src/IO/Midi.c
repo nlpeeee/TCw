@@ -164,8 +164,8 @@ void send_midi_cc(uint8_t channel, uint8_t cc_num, uint8_t cc_value) {
     uint8_t status = 0xB0 | (channel & 0x0F); 
     uint8_t packet[3] = {
         status,
-        cc_num,
-        cc_value
+        cc_num & 0x7F,
+        cc_value & 0x7F
     };
     midi_out_send(packet, 3);
 }
@@ -210,8 +210,8 @@ void send_poly_aftertouch(uint8_t channel, uint8_t note, uint8_t pressure) {
 
     uint8_t packet[3] = {
         status,
-        note,
-        pressure
+        note & 0x7F,
+        pressure & 0x7F
     };
     midi_out_send(packet, 3);
 }
@@ -222,7 +222,7 @@ void send_aftertouch(uint8_t channel, uint8_t pressure)
 
     uint8_t packet[2] = {
         status,
-        pressure
+        pressure & 0x7F
     };
     midi_out_send(packet, 2);
 }
