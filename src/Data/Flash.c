@@ -12,7 +12,7 @@
 #include "pico/multicore.h"
 #include <string.h>
 
-// Last 2 flash sectors hold one preset per page (4 presets/sector, 8 total)
+// Last 2 flash sectors hold one preset per page (16 presets/sector, 32 total)
 #define FLASH_STORAGE_SECTORS 2
 #define FLASH_TARGET_OFFSET (PICO_FLASH_SIZE_BYTES - (FLASH_SECTOR_SIZE * FLASH_STORAGE_SECTORS))
 
@@ -27,6 +27,9 @@ static const uint8_t* flash_preset_base(void)
 {
     return (const uint8_t*)(XIP_BASE + FLASH_TARGET_OFFSET);
 }
+
+_Static_assert(FLASH_PRESET_COUNT * FLASH_PAGE_SIZE <= FLASH_SECTOR_SIZE * FLASH_STORAGE_SECTORS,
+               "More preset slots than the preset sectors hold");
 
 _Static_assert(sizeof(TouchordSettings) <= FLASH_PAGE_SIZE,
                "TouchordSettings exceeds flash page size");

@@ -102,6 +102,44 @@ void poll_buttons()
     }
 }
 
+// Hold a key button (B3-B5) and slide on the bar to pick that key slot's root.
+// Returns true while the bar is taken over for this, so the mode never sees it.
+static bool key_root_slide(float pos, bool touching)
+{
+    static bool active = false;
+    static const Note roots[12] = {
+        NOTE_C, NOTE_D_FLAT, NOTE_D, NOTE_E_FLAT, NOTE_E, NOTE_F,
+        NOTE_F_SHARP, NOTE_G, NOTE_A_FLAT, NOTE_A, NOTE_B_FLAT, NOTE_B,
+    };
+
+    int slot = -1;
+    if (tc_app.mode != TOUCHORD_SETTINGS)
+        for (int b = 3; b <= 5; b++)
+            if (!tc_control_states[b]) { slot = b - 3; break; }
+
+    if (slot < 0 || !touching) {
+        active = false;
+        return false;
+    }
+
+    // Only a touch that starts while the button is held picks a root, so
+    // switching key mid-strum leaves the strum alone.
+    if (!active && tc_touch_state) return false;
+    active = true;
+
+    int seg = segments(pos, 12);
+    if (seg > 11) seg = 11;
+    Note root = roots[seg];
+    if (tc_app.key[slot].root != root) {
+        tc_app.key[slot].root = root;
+        char msg[24];
+        snprintf(msg, sizeof msg, "Key %d: %s %s", slot + 1, root_names[root],
+                 scale_names[tc_app.key[slot].quality]);
+        trigger_overlay(msg, 800);
+    }
+    return true;
+}
+
 void poll_trill_bar(TrillBar* bar)
 {
     trill_read(bar);
@@ -113,7 +151,15 @@ void poll_trill_bar(TrillBar* bar)
         const float DEAD_HIGH = 0.04f;
         pos = pos / (1.0f - DEAD_HIGH);
         if (pos > 1.0f) pos = 1.0f;
+    }
 
+    if (key_root_slide(pos, curr_state)) {
+        // Shown to the mode as no touch, so it picks the bar up afresh afterwards.
+        tc_touch_state = false;
+        return;
+    }
+
+    if (curr_state) {
         tc_trill_pos = pos;
         tc_trill_down(pos, size);
     } else if (tc_touch_state) {

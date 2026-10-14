@@ -121,8 +121,8 @@ UINode tree[MAX_UI_NODES] = {
     {"Modes", UI_SUBMENU, 2, 7,  NULL, {0}, NULL},
     {"MIDI", UI_SUBMENU, 5, 19,  NULL, {0}, NULL},
     {"Customize", UI_SUBMENU, 7, 24,  NULL, {0}, NULL},
-    {"Load Preset", UI_INT, 8, 0, trigger_load_preset, {.i_val = &preset_slot_load}, NULL},
-    {"Save Preset", UI_INT, 8, 0, trigger_save_preset, {.i_val = &preset_slot_save}, NULL},
+    {"Load Preset", UI_INT, FLASH_PRESET_COUNT, 0, trigger_load_preset, {.i_val = &preset_slot_load}, NULL},
+    {"Save Preset", UI_INT, FLASH_PRESET_COUNT, 0, trigger_save_preset, {.i_val = &preset_slot_save}, NULL},
     {"Firmware", UI_SUBMENU, 2, 45, NULL, {0}, NULL},
 
     // 7-8: Modes Settings
@@ -241,6 +241,11 @@ void settings_draw()
         case UI_INT:
             if(cn->data.i_val)
                 draw_int_center(*cn->data.i_val);
+            if (cn->data.i_val == &preset_slot_load || cn->data.i_val == &preset_slot_save)
+            {
+                const char* status = flash_preset_exists(*cn->data.i_val) ? "Saved" : "Empty";
+                ssd1306_draw_string(&tc_disp, 64 - (strlen(status) * 6) / 2, 44, 1, status);
+            }
         break;
         case UI_TOGGLE:
             if (cn->data.toggle)
