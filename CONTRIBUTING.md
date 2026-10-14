@@ -70,7 +70,7 @@ split into two `uint32_t`s — see how `tc_overlay_start_ms` /
 
 ### Modes
 
-Six modes: `Compose`, `Strum`, `Perform`, `Omni`, `Drum`, `Settings`.
+Seven modes: `Compose`, `Arp`, `Strum`, `Perform`, `Omni`, `Drum`, `Settings`.
 Each lives in `src/Modes/<Name>.{c,h}` and exposes `<name>_start()` and
 `<name>_end()` plus the handler functions it binds. The handler table
 is built by the `TC_MODE_HANDLERS(prefix)` macro in `Globals.h`, which
