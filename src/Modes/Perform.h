@@ -1,3 +1,11 @@
+/*
+ * Touchord — MIDI chord controller firmware.
+ * Copyright (C) 2025-2026 MB Daugdara
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * For more info, email info@daugdara.com
+ */
+
 #ifndef TOUCHORD_PERFORM_H
 #define TOUCHORD_PERFORM_H
 
@@ -12,7 +20,9 @@ void perform_draw();
 void perform_update();
 void perform_key_down(uint8_t key);
 void perform_key_up(uint8_t key);
+void perform_key_up_independent(uint8_t key);
 void perform_button_down(uint8_t button);
+void perform_button_double_down(uint8_t button);
 void perform_button_up(uint8_t button);
 void perform_trill_down(float pos, float size);
 void perform_trill_up();

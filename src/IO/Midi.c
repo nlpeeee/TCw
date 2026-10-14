@@ -1,3 +1,11 @@
+/*
+ * Touchord — MIDI chord controller firmware.
+ * Copyright (C) 2025-2026 MB Daugdara
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * For more info, email info@daugdara.com
+ */
+
 #include "Midi.h"
 #include "tusb.h"
 #include "hardware/uart.h"
@@ -17,14 +25,14 @@ void switch_midi_trs(MidiType type)
         break;
     }
 }
-void setup_midi_trs()
+void setup_midi_trs(MidiType type)
 {
     gpio_init(MIDI_PIN_IN_1);
     gpio_init(MIDI_PIN_IN_2);
     gpio_set_dir(MIDI_PIN_IN_1, GPIO_OUT);
     gpio_set_dir(MIDI_PIN_IN_2, GPIO_OUT);
 
-    switch_midi_trs(MIDI_TRS_A);
+    switch_midi_trs(type);
 
     uart_init(uart1, MIDI_BAUD_RATE);
     gpio_set_function(MIDI_PIN_DAT, GPIO_FUNC_UART); //MIDI_PIN_DAT is TX pin
@@ -46,6 +54,34 @@ void send_midi_chord(uint8_t channel, uint8_t status, uint8_t* notes, uint8_t le
     for(int i = 0; i < length; i++)
     {
         send_midi_note(channel, status, notes[i], velocity);
+    }
+}
+
+void send_midi_chord_diff(const uint8_t *prev, const uint8_t *curr,
+                          uint8_t channel, uint8_t velocity, bool retrigger)
+{
+    if (retrigger) {
+        for (int i = 0; i < MAX_CHORD; i++)
+            if (prev[i]) send_midi_note(channel, NOTE_OFF, prev[i], velocity);
+        for (int i = 0; i < MAX_CHORD; i++)
+            if (curr[i]) send_midi_note(channel, NOTE_ON,  curr[i], velocity);
+        return;
+    }
+    for (int i = 0; i < MAX_CHORD; i++) {
+        uint8_t p = prev[i];
+        if (p == 0) continue;
+        bool kept = false;
+        for (int j = 0; j < MAX_CHORD; j++)
+            if (curr[j] == p) { kept = true; break; }
+        if (!kept) send_midi_note(channel, NOTE_OFF, p, velocity);
+    }
+    for (int i = 0; i < MAX_CHORD; i++) {
+        uint8_t c = curr[i];
+        if (c == 0) continue;
+        bool was = false;
+        for (int j = 0; j < MAX_CHORD; j++)
+            if (prev[j] == c) { was = true; break; }
+        if (!was) send_midi_note(channel, NOTE_ON, c, velocity);
     }
 }
 
@@ -84,7 +120,7 @@ void send_poly_aftertouch(uint8_t channel, uint8_t note, uint8_t pressure) {
 
 void send_aftertouch(uint8_t channel, uint8_t pressure)
 {
-    uint8_t status = 0xA0 | (channel & 0x0F);
+    uint8_t status = 0xD0 | (channel & 0x0F);
 
     uint8_t packet[2] = {
         status,
