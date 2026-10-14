@@ -8,6 +8,7 @@
 
 #include "Midi.h"
 #include "BleMidi.h"
+#include "Timing/MidiClock.h"
 #include "tusb.h"
 #include "hardware/uart.h"
 #include "pico/util/queue.h"
@@ -44,6 +45,15 @@ void midi_out_task(void)
     MidiMsg m;
     while (queue_try_remove(&midi_out_queue, &m))
         midi_out_emit(&m);
+}
+
+void midi_in_task(void)
+{
+    uint8_t pkt[4];
+    while (tud_midi_available() && tud_midi_packet_read(pkt)) {
+        // Real-time messages are one byte, so they never share a packet.
+        if (pkt[1] >= 0xF8) midi_clock_rx(CLOCK_SRC_USB, pkt[1], time_us_64());
+    }
 }
 
 static void midi_out_send(const uint8_t *data, uint8_t len)

@@ -140,6 +140,9 @@ typedef struct
     bool perform_reset_size_on_lift;
 
     bool bluetooth;
+
+    bool clock_in;          // follow MIDI clock from USB or Bluetooth
+    uint8_t compose_roll;   // index into compose_roll_ms[], 0 = all notes at once
 } TouchordSettings;
 
 typedef enum

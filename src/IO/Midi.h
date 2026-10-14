@@ -18,6 +18,9 @@
 void midi_out_init(void);
 void midi_out_task(void);
 
+// Core 0: read incoming USB MIDI. Only clock and transport are used so far.
+void midi_in_task(void);
+
 void switch_midi_trs(MidiType type);
 void setup_midi_trs(MidiType type);
 void send_trs_midi(uint8_t* data, uint8_t len);

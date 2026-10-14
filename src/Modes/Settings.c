@@ -14,6 +14,8 @@
 #include "Sync.h"
 #include "Data/Flash.h"
 #include "IO/BleMidi.h"
+#include "Timing/MidiClock.h"
+#include "Compose.h"
 #include "Rendering/Graphics.h"
 #include "pico/critical_section.h"
 #include <stdio.h>
@@ -107,6 +109,7 @@ const char* trs_midi_sel[2] = {"Type A", "Type B"};
 const char* on_off_sel[2] = {"Off", "On"};
 const char* compose_sel[3] = {"Degree", "Inversion", "Jazz"};
 const char* degree_sel[9] = {"ERR", "Major", "Minor", "Dominant", "Diminished", "Augmented", "Sus2", "Sus4", "ERR"};
+const char* roll_sel[COMPOSE_ROLL_COUNT] = {"Off", "10 ms", "20 ms", "30 ms", "50 ms", "80 ms"};
 const char* scale_sel[12] = {"ERR", "Major", "Minor", "Dorian", "Phrygian", "Lydian", "Mixolydian", "Locrian", "Custom 0", "Custom 1", "Custom 2", "Custom 3"};
 
 UINode tree[MAX_UI_NODES] = {
@@ -115,22 +118,23 @@ UINode tree[MAX_UI_NODES] = {
 
     // 1-6: First Page
     {"Modes", UI_SUBMENU, 2, 7,  NULL, {0}, NULL},
-    {"MIDI", UI_SUBMENU, 4, 18,  NULL, {0}, NULL},
-    {"Customize", UI_SUBMENU, 7, 22,  NULL, {0}, NULL},
+    {"MIDI", UI_SUBMENU, 5, 19,  NULL, {0}, NULL},
+    {"Customize", UI_SUBMENU, 7, 24,  NULL, {0}, NULL},
     {"Load Preset", UI_INT, 8, 0, trigger_load_preset, {.i_val = &preset_slot_load}, NULL},
     {"Save Preset", UI_INT, 8, 0, trigger_save_preset, {.i_val = &preset_slot_save}, NULL},
-    {"Firmware", UI_SUBMENU, 2, 43, NULL, {0}, NULL},
+    {"Firmware", UI_SUBMENU, 2, 45, NULL, {0}, NULL},
 
     // 7-8: Modes Settings
-    {"Compose", UI_SUBMENU, 3, 9, NULL, {0}, NULL},
-    {"Perform", UI_SUBMENU, 6, 12, NULL, {0}, NULL},
+    {"Compose", UI_SUBMENU, 4, 9, NULL, {0}, NULL},
+    {"Perform", UI_SUBMENU, 6, 13, NULL, {0}, NULL},
 
-    // 9-11: Modes.Compose Settings
+    // 9-12: Modes.Compose Settings
     {"Mode",       UI_ENUM,   3, 0, NULL, {.en_val=&tc_app.compose_type}, compose_sel},
     {"Sustain",    UI_TOGGLE, 2, 0, NULL, {.toggle=&tc_app.compose_sustain},    on_off_sel},
     {"Voice Lead", UI_TOGGLE, 2, 0, NULL, {.toggle=&tc_app.compose_voice_lead}, on_off_sel},
+    {"Roll",       UI_ENUM,   COMPOSE_ROLL_COUNT, 0, NULL, {.en_val=&tc_app.compose_roll}, roll_sel},
 
-    // 12-17: Modes.Perform Settings
+    // 13-18: Modes.Perform Settings
     {"Pos CC", UI_INT, 128, 0, NULL, {.i_val=&tc_app.perform_pos_cc}, NULL},
     {"Size CC", UI_INT, 128, 0, NULL, {.i_val=&tc_app.perform_size_cc}, NULL},
     {"Pos Default", UI_INT, 128, 0, NULL, {.i_val=&tc_app.perform_pos_default}, NULL},
@@ -138,46 +142,47 @@ UINode tree[MAX_UI_NODES] = {
     {"Pos Keep", UI_TOGGLE, 2, 0, NULL, {.toggle=&tc_app.perform_reset_pos_on_lift}, on_off_sel},
     {"Size Keep", UI_TOGGLE, 2, 0, NULL, {.toggle=&tc_app.perform_reset_size_on_lift}, on_off_sel},
 
-    // 18-21: MIDI Settings
+    // 19-23: MIDI Settings
     {"Channel", UI_INT, 16, 0, NULL,  {.i_val=&tc_app.channel}, NULL},
     {"TRS Midi", UI_ENUM, 2, 0, trigger_midi_type, {.en_val=&tc_app.midi_type}, trs_midi_sel},
     {"Velocity", UI_INT, 128, 0, NULL, {.i_val=&tc_app.velocity}, NULL},
     {"Bluetooth", UI_TOGGLE, 2, 0, NULL, {.toggle=&tc_app.bluetooth}, on_off_sel},
+    {"Clock In", UI_TOGGLE, 2, 0, NULL, {.toggle=&tc_app.clock_in}, on_off_sel},
 
-    // 22-24 Customize (Buttons)
-    {"Button 1", UI_SUBMENU, 2, 29, NULL, {0}, NULL},
-    {"Button 2", UI_SUBMENU, 2, 31, NULL, {0}, NULL},
-    {"Button 3", UI_SUBMENU, 2, 33, NULL, {0}, NULL},
-    // 25-28 Customize (Custom Scales)
-    {"Custom 0", UI_SUBMENU, 2, 35, NULL, {0}, NULL},
-    {"Custom 1", UI_SUBMENU, 2, 37, NULL, {0}, NULL},
-    {"Custom 2", UI_SUBMENU, 2, 39, NULL, {0}, NULL},
-    {"Custom 3", UI_SUBMENU, 2, 41, NULL, {0}, NULL},
+    // 24-26 Customize (Buttons)
+    {"Button 1", UI_SUBMENU, 2, 31, NULL, {0}, NULL},
+    {"Button 2", UI_SUBMENU, 2, 33, NULL, {0}, NULL},
+    {"Button 3", UI_SUBMENU, 2, 35, NULL, {0}, NULL},
+    // 27-30 Customize (Custom Scales)
+    {"Custom 0", UI_SUBMENU, 2, 37, NULL, {0}, NULL},
+    {"Custom 1", UI_SUBMENU, 2, 39, NULL, {0}, NULL},
+    {"Custom 2", UI_SUBMENU, 2, 41, NULL, {0}, NULL},
+    {"Custom 3", UI_SUBMENU, 2, 43, NULL, {0}, NULL},
 
-    // 29-30 Customize.B1
+    // 31-32 Customize.B1
     {"Root", UI_ENUM, 17, 0, NULL, {.en_val = &tc_app.key[0].root}, root_names},
     {"Scale", UI_ENUM, 12, 1, NULL, {.en_val = &tc_app.key[0].quality}, scale_sel},
-    // 31-32 Customize.B2
+    // 33-34 Customize.B2
     {"Root", UI_ENUM, 17, 0, NULL, {.en_val = &tc_app.key[1].root}, root_names},
     {"Scale", UI_ENUM, 12, 1, NULL, {.en_val = &tc_app.key[1].quality}, scale_sel},
-    // 33-34 Customize.B3
+    // 35-36 Customize.B3
     {"Root", UI_ENUM, 17, 0, NULL, {.en_val = &tc_app.key[2].root}, root_names},
     {"Scale", UI_ENUM, 12, 1, NULL, {.en_val = &tc_app.key[2].quality}, scale_sel},
 
-    // 35-36 Customize.C0
+    // 37-38 Customize.C0
     {"Intervals", UI_PER_BUTTON_INT,  12, 0, trigger_custom_scale, {.i_val  = tc_app.custom_scale_intervals[0]}, NULL},
     {"Degrees",   UI_PER_BUTTON_ENUM, 7,  1, trigger_custom_scale, {.en_val = tc_app.custom_scale_chords[0]},    degree_sel},
-    // 37-38 Customize.C1
+    // 39-40 Customize.C1
     {"Intervals", UI_PER_BUTTON_INT,  12, 0, trigger_custom_scale, {.i_val  = tc_app.custom_scale_intervals[1]}, NULL},
     {"Degrees",   UI_PER_BUTTON_ENUM, 7,  1, trigger_custom_scale, {.en_val = tc_app.custom_scale_chords[1]},    degree_sel},
-    // 39-40 Customize.C2
+    // 41-42 Customize.C2
     {"Intervals", UI_PER_BUTTON_INT,  12, 0, trigger_custom_scale, {.i_val  = tc_app.custom_scale_intervals[2]}, NULL},
     {"Degrees",   UI_PER_BUTTON_ENUM, 7,  1, trigger_custom_scale, {.en_val = tc_app.custom_scale_chords[2]},    degree_sel},
-    // 41-42 Customize.C3
+    // 43-44 Customize.C3
     {"Intervals", UI_PER_BUTTON_INT,  12, 0, trigger_custom_scale, {.i_val  = tc_app.custom_scale_intervals[3]}, NULL},
     {"Degrees",   UI_PER_BUTTON_ENUM, 7,  1, trigger_custom_scale, {.en_val = tc_app.custom_scale_chords[3]},    degree_sel},
 
-    // 43-44: Firmware
+    // 45-46: Firmware
     {"Reset Factory",   UI_TRIGGER, 0, 0, trigger_factory_reset, {0}, NULL},
     {"Firmware Update", UI_TRIGGER, 0, 0, trigger_boot_sel,      {0}, NULL},
 };
@@ -239,13 +244,18 @@ void settings_draw()
         case UI_TOGGLE:
             if (cn->data.toggle)
                 draw_string_center(cn->opts[*cn->data.toggle ? 1 : 0]);
+            {
+                char status[22];
+                status[0] = '\0';
 #if TOUCHORD_BLE
-            if (cn->data.toggle == &tc_app.bluetooth) {
-                char status[20];
-                ble_midi_status(status, sizeof status);
-                ssd1306_draw_string(&tc_disp, 64 - (strlen(status) * 6) / 2, 44, 1, status);
-            }
+                if (cn->data.toggle == &tc_app.bluetooth)
+                    ble_midi_status(status, sizeof status);
 #endif
+                if (cn->data.toggle == &tc_app.clock_in)
+                    midi_clock_status(status, sizeof status);
+                if (status[0])
+                    ssd1306_draw_string(&tc_disp, 64 - (strlen(status) * 6) / 2, 44, 1, status);
+            }
         break;
         case UI_PER_BUTTON_ENUM:
             draw_string_int_centered("Selected Key: ", settings_current_key, 7);
