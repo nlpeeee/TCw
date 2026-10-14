@@ -32,6 +32,7 @@
 #include "tusb.h"
 
 #include "Modes/Compose.h"
+#include "Modes/Arp.h"
 #include "Modes/Perform.h"
 #include "Modes/Strum.h"
 #include "Modes/Omni.h"
@@ -168,6 +169,7 @@ void select_mode(TouchordMode mode)
 {
     switch (prevMode) {
         case TOUCHORD_COMPOSE:  compose_end();  break;
+        case TOUCHORD_ARP:      arp_end();      break;
         case TOUCHORD_STRUM:    strum_end();    break;
         case TOUCHORD_PERFORM:  perform_end();  break;
         case TOUCHORD_OMNI:     omni_end();     break;
@@ -176,6 +178,7 @@ void select_mode(TouchordMode mode)
     }
     switch (mode) {
         case TOUCHORD_COMPOSE:  compose_start();  break;
+        case TOUCHORD_ARP:      arp_start();      break;
         case TOUCHORD_STRUM:    strum_start();    break;
         case TOUCHORD_PERFORM:  perform_start();  break;
         case TOUCHORD_OMNI:     omni_start();     break;
@@ -297,6 +300,7 @@ int main()
             next_button_poll = make_timeout_time_ms(BUTTON_POLL_MS);
         }
 
+        arp_task();
         sched_task();
         midi_out_task();
         led_blinking_task();

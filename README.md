@@ -18,6 +18,12 @@ TCw tracks [dovker/Touchord](https://github.com/dovker/Touchord) (currently v1.0
   - Keys play whenever USB *or* Bluetooth is connected, so it can run from a battery or USB power bank.
   - **Settings > MIDI > Bluetooth** turns Bluetooth MIDI on or off. The LED blinks slowly while USB or Bluetooth is connected.
   - "BT Connected" / "BT Disconnected" pops up on screen when a host connects or drops.
+- **Arp mode** (B0 from Compose). Hold a key and its chord plays one note at a time.
+  - Touch bar, left to right in 8 parts: six rates (1/4, 1/8, 1/8T, 1/16, 1/16T, 1/32), then tap for Range (1-4 octaves), then tap for Latch. With Latch on, press the same key again to stop.
+  - Double-click B1/B2 steps the pattern: Up, Down, Up-Down, Random, Chord.
+  - Pattern, rate, range, gate, tempo and latch are also under **Settings > Modes > Arp**.
+- **MIDI clock in** over USB or Bluetooth. The arp locks to the host's beat while it plays and uses its tempo while it is stopped; with no clock it uses the Arp Tempo setting. **Settings > MIDI > Clock In** shows the incoming tempo.
+- **Compose Roll** (**Settings > Modes > Compose > Roll**) plays chords from the lowest note up, 10 to 80 ms apart.
 
 ## Building
 

@@ -102,6 +102,8 @@ bool midi_clock_present(void) { return present; }
 bool midi_clock_running(void) { return running; }
 uint32_t midi_clock_ticks(void) { return ticks; }
 
+uint32_t midi_clock_tick_us(void) { return present ? tick_us : 0; }
+
 uint32_t midi_clock_bpm(void)
 {
     uint32_t t = tick_us;

@@ -17,6 +17,7 @@
 // Tags group a feature's events so they can be cancelled together.
 enum {
     SCHED_TAG_COMPOSE = 1,
+    SCHED_TAG_ARP,
 };
 
 void sched_init(void);

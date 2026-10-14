@@ -51,7 +51,7 @@ pico_sdk_init()
 
 set(TOUCHORD_SOURCES
     src/Touchord.c src/Globals.c src/Sync.c src/usb_descriptors.c
-    src/Modes/Compose.c src/Modes/Strum.c src/Modes/Settings.c
+    src/Modes/Compose.c src/Modes/Arp.c src/Modes/Strum.c src/Modes/Settings.c
     src/Modes/Perform.c src/Modes/Omni.c src/Modes/Drum.c
     src/Notes/Note.c
     src/Rendering/Graphics.c src/Rendering/ScreenDma.c

@@ -62,6 +62,13 @@ const TouchordSettings tc_app_default = {
 
     .clock_in                    = true,
     .compose_roll                = 0,
+
+    .arp_pattern                 = 0,   // Up
+    .arp_rate                    = 3,   // 1/16
+    .arp_octaves                 = 0,   // 1 octave
+    .arp_gate                    = 1,   // 50%
+    .arp_bpm                     = 120,
+    .arp_latch                   = false,
 };
 
 TouchordSettings tc_app;
