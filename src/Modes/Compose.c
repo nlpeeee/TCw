@@ -139,6 +139,8 @@ void compose_key_down(uint8_t key)
 {
     critical_section_enter_blocking(&tc_app_lock);
     compose_last_degree = key;
+    // Hold B3 and slide changes the size without touching the bar as Compose sees it.
+    if (!tc_touch_state) compose_extension = tc_app.extension_count;
 
     uint8_t prev_chord[MAX_CHORD];
     memcpy(prev_chord, tc_app.chord, MAX_CHORD);
@@ -185,9 +187,6 @@ void compose_button_down(uint8_t button)
         case 0: tc_app_set_mode(TOUCHORD_ARP); break;
         case 1: if (tc_app.octave > 0) tc_app.octave--; break;
         case 2: if (tc_app.octave < 7) tc_app.octave++; break;
-        default:
-            if (button > 2) tc_app.current_key = button - 3;
-            break;
     }
 }
 

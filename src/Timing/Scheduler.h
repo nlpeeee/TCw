@@ -18,6 +18,7 @@
 enum {
     SCHED_TAG_COMPOSE = 1,
     SCHED_TAG_ARP,
+    SCHED_TAG_PREVIEW,      // chord played when a held-button gesture changes the key, set or size
 };
 
 void sched_init(void);

@@ -85,9 +85,6 @@ void drum_button_down(uint8_t button)
         case 0: tc_app_set_mode(TOUCHORD_SETTINGS); break;
         case 1: if (tc_app.octave > 0) tc_app.octave--; break;
         case 2: if (tc_app.octave < 7) tc_app.octave++; break;
-        default:
-            if (button > 2) tc_app.current_key = button - 3;
-            break;
     }
 }
 
