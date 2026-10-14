@@ -11,6 +11,7 @@
 #include "Helper.h"
 #include "Sync.h"
 #include "IO/Midi.h"
+#include "Timing/Scheduler.h"
 #include "Notes/Note.h"
 #include "Rendering/Graphics.h"
 #include "pico/critical_section.h"
@@ -50,6 +51,36 @@ static void build_current_chord(int key)
     }
 }
 
+// Settings > Modes > Compose > Roll: gap between notes, lowest note first.
+const uint8_t compose_roll_ms[COMPOSE_ROLL_COUNT] = { 0, 10, 20, 30, 50, 80 };
+
+static uint32_t compose_roll_us(void)
+{
+    uint8_t r = tc_app.compose_roll;
+    return r < COMPOSE_ROLL_COUNT ? compose_roll_ms[r] * 1000u : 0;
+}
+
+// Retrigger prev -> curr, rolling the new notes in from the bottom up.
+static void send_chord_rolled(const uint8_t *prev, const uint8_t *curr, uint32_t gap_us)
+{
+    sched_cancel(SCHED_TAG_COMPOSE);
+    for (int i = 0; i < MAX_CHORD; i++)
+        if (prev[i]) send_midi_note(tc_app.channel, NOTE_OFF, prev[i], tc_app.velocity);
+
+    uint8_t sorted[MAX_CHORD];
+    int n = 0;
+    for (int i = 0; i < MAX_CHORD; i++) {
+        uint8_t c = curr[i];
+        if (!c) continue;
+        int j = n++;
+        while (j > 0 && sorted[j - 1] > c) { sorted[j] = sorted[j - 1]; j--; }
+        sorted[j] = c;
+    }
+    for (int i = 0; i < n; i++)
+        sched_note(i * gap_us, tc_app.channel, NOTE_ON, sorted[i],
+                   tc_app.velocity, SCHED_TAG_COMPOSE);
+}
+
 static const ModeHandlers compose_handlers = TC_MODE_HANDLERS(compose);
 
 void compose_start()
@@ -67,6 +98,7 @@ void compose_start()
 
 void compose_end()
 {
+    sched_cancel(SCHED_TAG_COMPOSE);
     send_midi_chord(tc_app.channel, NOTE_OFF, tc_app.chord, compose_last_extension, tc_app.velocity);
     tc_app.chord_name[0]  = '\0';
     tc_compose_tooltip[0] = '\0';
@@ -98,7 +130,11 @@ void compose_key_down(uint8_t key)
     if (tc_app.compose_voice_lead)
         apply_voice_leading(tc_app.chord, compose_extension, prev_chord);
 
-    send_midi_chord_diff(prev_chord, tc_app.chord, tc_app.channel, tc_app.velocity, true);
+    uint32_t roll_us = compose_roll_us();
+    if (roll_us)
+        send_chord_rolled(prev_chord, tc_app.chord, roll_us);
+    else
+        send_midi_chord_diff(prev_chord, tc_app.chord, tc_app.channel, tc_app.velocity, true);
     compose_last_extension = compose_extension;
 
     prev_seg = -1;
@@ -112,6 +148,7 @@ void compose_key_up(uint8_t key)
     critical_section_enter_blocking(&tc_app_lock);
     compose_last_degree = -1;
     if (!tc_app.compose_sustain) {
+        sched_cancel(SCHED_TAG_COMPOSE);
         send_midi_chord(tc_app.channel, NOTE_OFF, tc_app.chord, compose_last_extension, tc_app.velocity);
         build_chord(tc_app.key[tc_app.current_key], tc_app.octave, 0, CHORD_DEFAULT,
                     0, tc_app.inversion, tc_app.chord, tc_app.chord_name);
@@ -186,6 +223,9 @@ void compose_trill_down(float pos, float size)
 
     compose_last_extension = compose_extension;
 
+    // The diff below assumes every note of the old chord is already on.
+    sched_flush(SCHED_TAG_COMPOSE);
+
     uint8_t prev_chord[MAX_CHORD];
     memcpy(prev_chord, tc_app.chord, MAX_CHORD);
 
@@ -213,6 +253,7 @@ void compose_trill_up()
     tc_app.inversion       = 0;
 
     if (compose_last_degree != (uint8_t)-1 && tc_app.chord_name[0] != '\0') {
+        sched_flush(SCHED_TAG_COMPOSE);
         uint8_t prev_chord[MAX_CHORD];
         memcpy(prev_chord, tc_app.chord, MAX_CHORD);
         build_chord(tc_app.key[tc_app.current_key], tc_app.octave,

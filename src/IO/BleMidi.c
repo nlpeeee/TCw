@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "Globals.h"
 #include "Rendering/Graphics.h"
+#include "Timing/MidiClock.h"
 
 #include "pico/cyw43_arch.h"
 #include "btstack.h"
@@ -79,6 +80,18 @@ static void ble_midi_server_start(void)
                          SM_AUTHREQ_SECURE_CONNECTION | SM_AUTHREQ_BONDING);
 }
 
+// BLE packets bunch up per connection interval, so arrival times are too
+// rough for tempo. The sender's 13-bit millisecond timestamps are unwrapped
+// into a running timeline instead.
+static uint64_t ble_rx_time_us(uint16_t ts)
+{
+    static uint64_t t_ms = 0;
+    static uint16_t last_ts = 0;
+    t_ms += (uint16_t)(ts - last_ts) & 0x1FFF;
+    last_ts = ts;
+    return t_ms * 1000;
+}
+
 void ble_midi_task(void)
 {
     if (!radio_ready) return;
@@ -92,10 +105,12 @@ void ble_midi_task(void)
     if (want_on && !is_on)       ble_midi_server_start();
     else if (!want_on && is_on)  ble_midi_server_deinit();
 
-    // Touchord has no MIDI input; drain it so the receive buffer never fills.
+    // Only clock and transport are used; everything else is drained so the
+    // receive buffer never fills.
     uint8_t  in[3];
     uint16_t ts;
-    while (ble_midi_server_stream_read(sizeof in, in, &ts) > 0) {}
+    while (ble_midi_server_stream_read(sizeof in, in, &ts) > 0)
+        if (in[0] >= 0xF8) midi_clock_rx(CLOCK_SRC_BLE, in[0], ble_rx_time_us(ts));
 
     bool connected = ble_midi_server_is_connected();
     connected_now = connected;

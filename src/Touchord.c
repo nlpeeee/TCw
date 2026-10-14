@@ -20,6 +20,8 @@
 #include "Globals.h"
 #include "IO/Midi.h"
 #include "IO/BleMidi.h"
+#include "Timing/Scheduler.h"
+#include "Timing/MidiClock.h"
 #include "Data/Flash.h"
 #include "Notes/Note.h"
 #include "Sync.h"
@@ -267,6 +269,7 @@ int main()
     tc_app.mode = TOUCHORD_COMPOSE;
 
     tc_sync_init();
+    sched_init();
     reload_custom_scales();
     compose_start();
 
@@ -284,7 +287,9 @@ int main()
     absolute_time_t next_button_poll = get_absolute_time();
     while (true) {
         tud_task();
+        midi_in_task();
         ble_midi_task();
+        midi_clock_task();
 
         if ((tud_midi_mounted() || ble_midi_is_connected())
             && time_reached(next_button_poll)) {
@@ -292,6 +297,7 @@ int main()
             next_button_poll = make_timeout_time_ms(BUTTON_POLL_MS);
         }
 
+        sched_task();
         midi_out_task();
         led_blinking_task();
     }

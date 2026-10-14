@@ -13,6 +13,9 @@
 #include "pico/stdlib.h"
 #include "Defines.h"
 
+#define COMPOSE_ROLL_COUNT 6
+extern const uint8_t compose_roll_ms[COMPOSE_ROLL_COUNT];
+
 void compose_start();
 void compose_end();
 void compose_draw();
