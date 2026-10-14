@@ -30,6 +30,9 @@ bool ble_midi_is_connected(void);
 
 void ble_midi_led_write(bool on);
 
+// Short Bluetooth status for the Settings screen. Safe to call from core 1.
+void ble_midi_status(char *buf, uint32_t len);
+
 #else
 
 static inline bool ble_midi_init(void) { return false; }
@@ -37,6 +40,7 @@ static inline void ble_midi_task(void) {}
 static inline void ble_midi_send(const uint8_t *data, uint8_t len) { (void)data; (void)len; }
 static inline bool ble_midi_is_connected(void) { return false; }
 static inline void ble_midi_led_write(bool on) { (void)on; }
+static inline void ble_midi_status(char *buf, uint32_t len) { if (len) buf[0] = '\0'; }
 
 #endif
 

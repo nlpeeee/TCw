@@ -13,6 +13,7 @@
 #include "Helper.h"
 #include "Sync.h"
 #include "Data/Flash.h"
+#include "IO/BleMidi.h"
 #include "Rendering/Graphics.h"
 #include "pico/critical_section.h"
 #include <stdio.h>
@@ -238,6 +239,13 @@ void settings_draw()
         case UI_TOGGLE:
             if (cn->data.toggle)
                 draw_string_center(cn->opts[*cn->data.toggle ? 1 : 0]);
+#if TOUCHORD_BLE
+            if (cn->data.toggle == &tc_app.bluetooth) {
+                char status[20];
+                ble_midi_status(status, sizeof status);
+                ssd1306_draw_string(&tc_disp, 64 - (strlen(status) * 6) / 2, 44, 1, status);
+            }
+#endif
         break;
         case UI_PER_BUTTON_ENUM:
             draw_string_int_centered("Selected Key: ", settings_current_key, 7);
