@@ -143,6 +143,14 @@ void reload_custom_scales()
     memcpy(scale_intervals[SCALE_CUSTOM0], tc_app.custom_scale_intervals[0], size_intervals);
 }
 
+// Drop notes above the MIDI range by octaves. Data bytes >127 would be
+// read as status bytes by every receiver.
+static void fold_into_midi_range(uint8_t *notes, int len)
+{
+    for (int i = 0; i < len; i++)
+        while (notes[i] > 127) notes[i] -= 12;
+}
+
 void sort_chord_notes(uint8_t *arr, int len)
 {
     for (int n = len; n > 1; --n)
@@ -212,11 +220,11 @@ void build_chord(
     for (int i = 0; i < inversion && i < extensions; ++i)
         midi_out[i] += 12;
 
+    fold_into_midi_range(midi_out, extensions);
     sort_chord_notes(midi_out, extensions);
 
     const char* root_name = get_note_name(root, is_flat);
     const char* degree_name = deg_name(chord_type);
-    const char* ext_name = interval_name_from_semitones(chord_intervals[chord_type][extensions-1]);
 
     chord_name[0] = '\0';
 
@@ -225,6 +233,7 @@ void build_chord(
 
     if(extensions > 3)
     {
+        const char* ext_name = interval_name_from_semitones(chord_intervals[chord_type][extensions-1]);
         strncat(chord_name, ext_name, CHORD_NAME_LEN - strlen(chord_name) - 1);
     }
 }
@@ -258,6 +267,7 @@ void build_jazz_chord(Scale key, int octave, int degree, int sub_seg,
     for (int i = 0; i < extensions; i++)
         out[i] = (uint8_t)(sub_root + chord_intervals[sub_type][i]);
 
+    fold_into_midi_range(out, extensions);
     sort_chord_notes(out, extensions);
 
     snprintf(name, CHORD_NAME_LEN, "%s", get_note_name(sub_root, is_flat));

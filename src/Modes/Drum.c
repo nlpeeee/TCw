@@ -12,8 +12,17 @@
 #include "IO/Midi.h"
 #include "Rendering/Graphics.h"
 
+#define DRUM_NO_NOTE 0xFF
+
 uint8_t drum_velocity = DEFAULT_VELOCITY;
-uint8_t last_note     = -1;
+
+// Note sounding on each pad, so its note-off matches even if the octave
+// changed while it was held. DRUM_NO_NOTE when the pad is up.
+static uint8_t pad_note[NUM_KEYS] = {
+    DRUM_NO_NOTE, DRUM_NO_NOTE, DRUM_NO_NOTE, DRUM_NO_NOTE,
+    DRUM_NO_NOTE, DRUM_NO_NOTE, DRUM_NO_NOTE,
+};
+_Static_assert(NUM_KEYS == 7, "pad_note initialiser");
 
 static const ModeHandlers drum_handlers = TC_MODE_HANDLERS(drum);
 
@@ -27,7 +36,11 @@ void drum_start()
 
 void drum_end()
 {
-    send_midi_note(tc_app.channel, NOTE_OFF, last_note, drum_velocity);
+    for (int i = 0; i < NUM_KEYS; i++) {
+        if (pad_note[i] == DRUM_NO_NOTE) continue;
+        send_midi_note(tc_app.channel, NOTE_OFF, pad_note[i], 0);
+        pad_note[i] = DRUM_NO_NOTE;
+    }
 }
 
 void drum_draw()
@@ -54,15 +67,16 @@ void drum_key_down(uint8_t key)
 {
     uint8_t note = 12 * (tc_app.octave + 1) + key;
     send_midi_note(tc_app.channel, NOTE_ON, note, drum_velocity);
-    last_note = note;
+    pad_note[key] = note;
 }
 
 void drum_key_up(uint8_t key) {}
 
 void drum_key_up_independent(uint8_t key)
 {
-    send_midi_note(tc_app.channel, NOTE_OFF, 12 * (tc_app.octave + 1) + key, 0);
-    last_note = -1;
+    if (pad_note[key] == DRUM_NO_NOTE) return;
+    send_midi_note(tc_app.channel, NOTE_OFF, pad_note[key], 0);
+    pad_note[key] = DRUM_NO_NOTE;
 }
 
 void drum_button_down(uint8_t button)

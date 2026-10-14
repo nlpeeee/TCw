@@ -44,29 +44,39 @@ static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 // Set by core 1 once it can be paused for flash writes (see io_task).
 static volatile bool core1_lockout_ready = false;
 
+// Fire a held-back single/double click on a double-click-enabled button.
+static void flush_pending_click(void)
+{
+    if (tc_last_control_clicks >= 2)      tc_button_double_down(tc_last_control);
+    else if (tc_last_control_clicks == 1) tc_button_down(tc_last_control);
+    tc_last_control_clicks = 0;
+}
+
 void poll_buttons()
 {
     uint64_t now = to_ms_since_boot(get_absolute_time());
-    if (now - tc_time_last_control > DEFAULT_DOUBLE_CLICK_MS) {
-        if (tc_last_control_clicks >= 2)      tc_button_double_down(tc_last_control);
-        else if (tc_last_control_clicks == 1) tc_button_down(tc_last_control);
-        tc_last_control_clicks = 0;
-    }
+    if (now - tc_time_last_control > DEFAULT_DOUBLE_CLICK_MS)
+        flush_pending_click();
 
     for (int i = 0; i < NUM_CONTROLS; i++) {
         bool curr_state = gpio_get(i + CONTROL_0);
         if (tc_control_states[i] && !curr_state) {
+            // Another button settles a pending click first, so it is neither
+            // lost nor replayed as this button.
             if (tc_control_double_click[i]) {
-                if (now - tc_time_last_control < DEFAULT_DOUBLE_CLICK_MS && tc_last_control == i) {
+                if (tc_last_control_clicks > 0 && tc_last_control == i
+                    && now - tc_time_last_control < DEFAULT_DOUBLE_CLICK_MS) {
                     tc_last_control_clicks++;
                 } else {
+                    flush_pending_click();
                     tc_time_last_control = now;
                     tc_last_control_clicks = 1;
+                    tc_last_control = i;
                 }
             } else {
+                flush_pending_click();
                 tc_button_down(i);
             }
-            tc_last_control = i;
         } else if (!tc_control_states[i] && curr_state) {
             tc_button_up(i);
         }
