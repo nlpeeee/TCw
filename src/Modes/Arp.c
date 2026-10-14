@@ -23,8 +23,9 @@
 // incoming MIDI clock while the host is playing, otherwise the Tempo setting
 // (or the incoming clock's tempo, while the host is stopped).
 //
-// Touch bar, 8 segments: 6 rates, then 1 octave, then 2 octaves. Latch and
-// 3-4 octave ranges are in Settings. Double-click B1/B2 steps the pattern.
+// Touch bar, 8 segments: 6 rates, then a two-segment Range zone where each
+// tap steps 1-4 octaves. Latch is in Settings. Double-click B1/B2 steps the
+// pattern.
 
 enum { ARP_UP = 0, ARP_DOWN, ARP_UPDOWN, ARP_RANDOM, ARP_CHORD };
 
@@ -272,14 +273,17 @@ void arp_trill_down(float pos, float size)
     if (seg < 0) seg = 0;
     if (seg >= ARP_TRILL_SEGS) seg = ARP_TRILL_SEGS - 1;
     if (seg == trill_seg_prev) return;
+    bool fresh = trill_seg_prev < 0;
     trill_seg_prev = seg;
+    // The Range zone acts once per tap, not when a rate slide runs into it.
+    if (seg >= ARP_RATE_COUNT && !fresh) return;
 
     critical_section_enter_blocking(&tc_app_lock);
     if (seg < ARP_RATE_COUNT) {
         tc_app.arp_rate = seg;
         snprintf(arp_tooltip, sizeof arp_tooltip, "Rate %s", arp_rate_names[seg]);
     } else {
-        tc_app.arp_octaves = seg - ARP_RATE_COUNT;   // 0 = 1 octave, 1 = 2 octaves
+        tc_app.arp_octaves = (clamp_setting(tc_app.arp_octaves, ARP_OCTAVES_MAX) + 1) % ARP_OCTAVES_MAX;
         snprintf(arp_tooltip, sizeof arp_tooltip, "Range %s", arp_octave_names[tc_app.arp_octaves]);
     }
     critical_section_exit(&tc_app_lock);
