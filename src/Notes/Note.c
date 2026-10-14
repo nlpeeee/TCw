@@ -7,6 +7,7 @@
  */
 
 #include "Note.h"
+#include "ChordSets.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -44,6 +45,7 @@ uint8_t scale_intervals[SCALE_COUNT][SCALE_LEN] =
     { 0, 2, 4, 5, 7, 8, 10 }, // Mixolydian b6
     { 0, 2, 4, 7, 9, 12, 14 }, // Major pentatonic, last two keys go up an octave
     { 0, 3, 5, 7, 10, 12, 15 }, // Minor pentatonic, last two keys go up an octave
+    { 0, 5, 7, 9, 2, 4, 7 }, // Chord set, filled in by load_chord_set()
 };
 
 ChordDegree scale_chords[SCALE_COUNT][SCALE_LEN] =
@@ -68,11 +70,12 @@ ChordDegree scale_chords[SCALE_COUNT][SCALE_LEN] =
     {CHORD_DOMINANT, CHORD_DIM, CHORD_DIM, CHORD_MINOR, CHORD_MINOR, CHORD_MAJOR, CHORD_DOMINANT}, // Mixolydian b6
     {CHORD_MAJOR, CHORD_MINOR, CHORD_MINOR, CHORD_DOMINANT, CHORD_MINOR, CHORD_MAJOR, CHORD_MINOR}, // Major pentatonic
     {CHORD_MINOR, CHORD_MAJOR, CHORD_MINOR, CHORD_MINOR, CHORD_MAJOR, CHORD_MINOR, CHORD_MAJOR}, // Minor pentatonic
+    {CHORD_MAJOR, CHORD_MAJOR, CHORD_DOMINANT, CHORD_MINOR, CHORD_MINOR, CHORD_MINOR, CHORD_SUS4}, // Chord set
 };
 
 const char* scale_names[SCALE_COUNT] = {
     "NULL", "Major", "Minor", "Dorian", "Phrygian", "Lydian", "Mixolydian", "Locrian", "Custom 0", "Custom 1", "Custom 2", "Custom 3",
-    "Harm Minor", "Mel Minor", "Harm Major", "Phryg Dom", "Lydian Dom", "Mixo b6", "Major Pent", "Minor Pent"
+    "Harm Minor", "Mel Minor", "Harm Major", "Phryg Dom", "Lydian Dom", "Mixo b6", "Major Pent", "Minor Pent", "Chord Set"
 };
 
 const uint8_t chord_intervals[8][6] =
@@ -158,6 +161,7 @@ void reload_custom_scales()
     size_t size_intervals = sizeof(tc_app.custom_scale_intervals[0]) * 4;
     memcpy(scale_chords[SCALE_CUSTOM0], tc_app.custom_scale_chords[0], size_chords);
     memcpy(scale_intervals[SCALE_CUSTOM0], tc_app.custom_scale_intervals[0], size_intervals);
+    load_chord_set();
 }
 
 // Drop notes above the MIDI range by octaves. Data bytes >127 would be
@@ -187,6 +191,27 @@ static ScaleType parallel_scale(ScaleType quality)
     return SCALE_MINOR;
 }
 
+// Chord symbol suffix for the chord_intervals[] stacks, by note count (3 to 6).
+static const char* chord_suffix(ChordDegree type, int notes)
+{
+    static const char* const stacks[][4] = {
+        [CHORD_MAJOR]    = {"",    "maj7", "maj9", "maj9#11"},
+        [CHORD_MINOR]    = {"m",   "m7",   "m9",   "m11"},
+        [CHORD_DOMINANT] = {"",    "7",    "9",    "11"},
+        [CHORD_DIM]      = {"dim", "m7b5", "m9b5", "m11b5"},
+    };
+    switch (type) {
+        case CHORD_AUG:  return "aug";
+        case CHORD_SUS2: return "sus2";
+        case CHORD_SUS4: return "sus4";
+        case CHORD_MAJOR: case CHORD_MINOR: case CHORD_DOMINANT: case CHORD_DIM:
+            if (notes < 3) notes = 3;
+            if (notes > 6) notes = 6;
+            return stacks[type][notes - 3];
+        default: return "";
+    }
+}
+
 void build_chord(
     Scale key, int octave, int degree, ChordDegree chord_type, int extensions, int inversion,
     uint8_t* midi_out, char* chord_name) 
@@ -197,7 +222,16 @@ void build_chord(
     }
     bool is_flat;
     uint8_t root = note_to_midi(key.root, octave, &is_flat);
-    if(key.quality == SCALE_MAJOR)
+    if(key.quality == SCALE_CHORD_SET)
+    {
+        // Settings can change the set without a reload, so read it fresh.
+        load_chord_set();
+        uint8_t offset = scale_intervals[SCALE_CHORD_SET][degree];
+        root += offset;
+        // Chords on the flat degrees (bII, bIII, bVI, bVII) never need a sharp.
+        if (offset == 1 || offset == 3 || offset == 8 || offset == 10) is_flat = true;
+    }
+    else if(key.quality == SCALE_MAJOR)
     {
         if(chord_type != CHORD_PARALLEL)
             root += scale_intervals[SCALE_MAJOR][degree];
@@ -219,7 +253,7 @@ void build_chord(
     else root += scale_intervals[key.quality][degree];
 
     // Like C minor above, the added scales with flat degrees read better spelled with flats in C.
-    if(key.quality >= SCALE_HARMONIC_MINOR && key.root == NOTE_C)
+    if(key.quality >= SCALE_HARMONIC_MINOR && key.quality != SCALE_CHORD_SET && key.root == NOTE_C)
     {
         for (int i = 0; i < SCALE_LEN; i++)
         {
@@ -233,7 +267,18 @@ void build_chord(
         extensions = 3;
     }
 
-    if (chord_type == CHORD_PARALLEL)
+    if (key.quality == SCALE_CHORD_SET)
+    {
+        // A chord set has no parallel key, so parallel swaps major and minor on the same root.
+        ChordDegree set_type = scale_chords[SCALE_CHORD_SET][degree];
+        if (chord_type == CHORD_PARALLEL)
+        {
+            if (set_type == CHORD_MAJOR || set_type == CHORD_DOMINANT) set_type = CHORD_MINOR;
+            else if (set_type == CHORD_MINOR) set_type = CHORD_MAJOR;
+        }
+        chord_type = set_type;
+    }
+    else if (chord_type == CHORD_PARALLEL)
     {
         if(key.quality == SCALE_MAJOR)
         {
@@ -271,19 +316,8 @@ void build_chord(
     fold_into_midi_range(midi_out, extensions);
     sort_chord_notes(midi_out, extensions);
 
-    const char* root_name = get_note_name(root, is_flat);
-    const char* degree_name = deg_name(chord_type);
-
-    chord_name[0] = '\0';
-
-    strncat(chord_name, root_name, CHORD_NAME_LEN - strlen(chord_name) - 1);
-    strncat(chord_name, degree_name, CHORD_NAME_LEN - strlen(chord_name) - 1);
-
-    if(extensions > 3)
-    {
-        const char* ext_name = interval_name_from_semitones(chord_intervals[chord_type][extensions-1]);
-        strncat(chord_name, ext_name, CHORD_NAME_LEN - strlen(chord_name) - 1);
-    }
+    snprintf(chord_name, CHORD_NAME_LEN, "%s%s", get_note_name(root, is_flat),
+             chord_suffix(chord_type, extensions));
 }
 
 void build_jazz_chord(Scale key, int octave, int degree, int sub_seg,
@@ -291,6 +325,7 @@ void build_jazz_chord(Scale key, int octave, int degree, int sub_seg,
 {
     bool is_flat;
     int natural_root = note_to_midi(key.root, octave, &is_flat);
+    if (key.quality == SCALE_CHORD_SET) load_chord_set();
     if      (key.quality == SCALE_MAJOR) natural_root += scale_intervals[SCALE_MAJOR][degree];
     else if (key.quality == SCALE_MINOR) natural_root += scale_intervals[SCALE_MINOR][degree];
     else                                 natural_root += scale_intervals[key.quality][degree];

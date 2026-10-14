@@ -7,13 +7,14 @@
  */
 
 #include "Globals.h"
+#include "Notes/ChordSets.h"
 
 const TouchordSettings tc_app_default = {
     .magic           = SETTINGS_MAGIC,
     .schema_version  = SETTINGS_SCHEMA_VERSION,
     .struct_size     = sizeof(TouchordSettings),
 
-    .key             = { {NOTE_C, SCALE_MAJOR},
+    .key             = { {NOTE_C, SCALE_CHORD_SET},
                          {NOTE_E, SCALE_MINOR},
                          {NOTE_B_FLAT, SCALE_CUSTOM0} },
     .current_key     = 0,
@@ -74,6 +75,8 @@ const TouchordSettings tc_app_default = {
 
     .perform_pos_type            = PERFORM_CC,
     .perform_size_type           = PERFORM_CC,
+
+    .chord_set                   = CHORD_SET_DEFAULT,
 };
 
 TouchordSettings tc_app;

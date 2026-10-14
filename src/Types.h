@@ -92,7 +92,8 @@ typedef enum
     SCALE_LYDIAN_DOMINANT,
     SCALE_MIXOLYDIAN_B6,
     SCALE_MAJOR_PENTATONIC,
-    SCALE_MINOR_PENTATONIC
+    SCALE_MINOR_PENTATONIC,
+    SCALE_CHORD_SET         // plays the chord set picked by TouchordSettings.chord_set
 } ScaleType;
 
 typedef enum
@@ -111,7 +112,7 @@ typedef enum
     COMPOSE_JAZZ
 } ComposeType;
 
-#define SCALE_COUNT 20
+#define SCALE_COUNT 21
 
 typedef struct
 {
@@ -173,6 +174,8 @@ typedef struct
 
     uint8_t perform_pos_type;   // PerformTarget: what Perform's Pos axis sends
     uint8_t perform_size_type;  // PerformTarget: what Perform's Size axis sends
+
+    uint8_t chord_set;          // index into chord_sets[] in Notes/ChordSets.c
 } TouchordSettings;
 
 typedef enum

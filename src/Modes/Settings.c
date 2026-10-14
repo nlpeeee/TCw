@@ -9,6 +9,7 @@
 #include "Settings.h"
 #include "IO/Midi.h"
 #include "Notes/Note.h"
+#include "Notes/ChordSets.h"
 #include "Globals.h"
 #include "Helper.h"
 #include "Sync.h"
@@ -115,7 +116,7 @@ const char* perform_type_sel[PERFORM_TARGET_COUNT] = {"CC", "Bend", "Press"};
 const char* bass_sel[17] = {"Off", "Ch 1", "Ch 2", "Ch 3", "Ch 4", "Ch 5", "Ch 6", "Ch 7", "Ch 8",
                             "Ch 9", "Ch 10", "Ch 11", "Ch 12", "Ch 13", "Ch 14", "Ch 15", "Ch 16"};
 const char* scale_sel[SCALE_COUNT] = {"ERR", "Major", "Minor", "Dorian", "Phrygian", "Lydian", "Mixolydian", "Locrian", "Custom 0", "Custom 1", "Custom 2", "Custom 3",
-                                       "Harm Minor", "Mel Minor", "Harm Major", "Phryg Dom", "Lydian Dom", "Mixo b6", "Major Pent", "Minor Pent"};
+                                       "Harm Minor", "Mel Minor", "Harm Major", "Phryg Dom", "Lydian Dom", "Mixo b6", "Major Pent", "Minor Pent", "Chord Set"};
 
 UINode tree[MAX_UI_NODES] = {
     // 0: ROOT "Settings"
@@ -124,10 +125,10 @@ UINode tree[MAX_UI_NODES] = {
     // 1-6: First Page
     {"Modes", UI_SUBMENU, 3, 7,  NULL, {0}, NULL},
     {"MIDI", UI_SUBMENU, 6, 28,  NULL, {0}, NULL},
-    {"Customize", UI_SUBMENU, 7, 34,  NULL, {0}, NULL},
+    {"Customize", UI_SUBMENU, 8, 34,  NULL, {0}, NULL},
     {"Load Preset", UI_INT, FLASH_PRESET_COUNT, 0, trigger_load_preset, {.i_val = &preset_slot_load}, NULL},
     {"Save Preset", UI_INT, FLASH_PRESET_COUNT, 0, trigger_save_preset, {.i_val = &preset_slot_save}, NULL},
-    {"Firmware", UI_SUBMENU, 2, 55, NULL, {0}, NULL},
+    {"Firmware", UI_SUBMENU, 2, 56, NULL, {0}, NULL},
 
     // 7-9: Modes Settings
     {"Compose", UI_SUBMENU, 4, 10, NULL, {0}, NULL},
@@ -166,40 +167,42 @@ UINode tree[MAX_UI_NODES] = {
     {"Clock In", UI_TOGGLE, 2, 0, NULL, {.toggle=&tc_app.clock_in}, on_off_sel},
     {"Bass", UI_ENUM, 17, 0, NULL, {.en_val=&tc_app.bass_channel}, bass_sel},
 
-    // 34-36 Customize (Buttons)
-    {"Button 1", UI_SUBMENU, 2, 41, NULL, {0}, NULL},
-    {"Button 2", UI_SUBMENU, 2, 43, NULL, {0}, NULL},
-    {"Button 3", UI_SUBMENU, 2, 45, NULL, {0}, NULL},
-    // 37-40 Customize (Custom Scales)
-    {"Custom 0", UI_SUBMENU, 2, 47, NULL, {0}, NULL},
-    {"Custom 1", UI_SUBMENU, 2, 49, NULL, {0}, NULL},
-    {"Custom 2", UI_SUBMENU, 2, 51, NULL, {0}, NULL},
-    {"Custom 3", UI_SUBMENU, 2, 53, NULL, {0}, NULL},
+    // 34 Customize (Chord set for keys whose scale is Chord Set)
+    {"Chords", UI_ENUM, CHORD_SET_COUNT, 0, trigger_custom_scale, {.en_val = &tc_app.chord_set}, chord_set_names},
+    // 35-37 Customize (Buttons)
+    {"Button 1", UI_SUBMENU, 2, 42, NULL, {0}, NULL},
+    {"Button 2", UI_SUBMENU, 2, 44, NULL, {0}, NULL},
+    {"Button 3", UI_SUBMENU, 2, 46, NULL, {0}, NULL},
+    // 38-41 Customize (Custom Scales)
+    {"Custom 0", UI_SUBMENU, 2, 48, NULL, {0}, NULL},
+    {"Custom 1", UI_SUBMENU, 2, 50, NULL, {0}, NULL},
+    {"Custom 2", UI_SUBMENU, 2, 52, NULL, {0}, NULL},
+    {"Custom 3", UI_SUBMENU, 2, 54, NULL, {0}, NULL},
 
-    // 41-42 Customize.B1
+    // 42-43 Customize.B1
     {"Root", UI_ENUM, 17, 0, NULL, {.en_val = &tc_app.key[0].root}, root_names},
     {"Scale", UI_ENUM, SCALE_COUNT, 1, NULL, {.en_val = &tc_app.key[0].quality}, scale_sel},
-    // 43-44 Customize.B2
+    // 44-45 Customize.B2
     {"Root", UI_ENUM, 17, 0, NULL, {.en_val = &tc_app.key[1].root}, root_names},
     {"Scale", UI_ENUM, SCALE_COUNT, 1, NULL, {.en_val = &tc_app.key[1].quality}, scale_sel},
-    // 45-46 Customize.B3
+    // 46-47 Customize.B3
     {"Root", UI_ENUM, 17, 0, NULL, {.en_val = &tc_app.key[2].root}, root_names},
     {"Scale", UI_ENUM, SCALE_COUNT, 1, NULL, {.en_val = &tc_app.key[2].quality}, scale_sel},
 
-    // 47-48 Customize.C0
+    // 48-49 Customize.C0
     {"Intervals", UI_PER_BUTTON_INT,  12, 0, trigger_custom_scale, {.i_val  = tc_app.custom_scale_intervals[0]}, NULL},
     {"Degrees",   UI_PER_BUTTON_ENUM, 7,  1, trigger_custom_scale, {.en_val = tc_app.custom_scale_chords[0]},    degree_sel},
-    // 49-50 Customize.C1
+    // 50-51 Customize.C1
     {"Intervals", UI_PER_BUTTON_INT,  12, 0, trigger_custom_scale, {.i_val  = tc_app.custom_scale_intervals[1]}, NULL},
     {"Degrees",   UI_PER_BUTTON_ENUM, 7,  1, trigger_custom_scale, {.en_val = tc_app.custom_scale_chords[1]},    degree_sel},
-    // 51-52 Customize.C2
+    // 52-53 Customize.C2
     {"Intervals", UI_PER_BUTTON_INT,  12, 0, trigger_custom_scale, {.i_val  = tc_app.custom_scale_intervals[2]}, NULL},
     {"Degrees",   UI_PER_BUTTON_ENUM, 7,  1, trigger_custom_scale, {.en_val = tc_app.custom_scale_chords[2]},    degree_sel},
-    // 53-54 Customize.C3
+    // 54-55 Customize.C3
     {"Intervals", UI_PER_BUTTON_INT,  12, 0, trigger_custom_scale, {.i_val  = tc_app.custom_scale_intervals[3]}, NULL},
     {"Degrees",   UI_PER_BUTTON_ENUM, 7,  1, trigger_custom_scale, {.en_val = tc_app.custom_scale_chords[3]},    degree_sel},
 
-    // 55-56: Firmware
+    // 56-57: Firmware
     {"Reset Factory",   UI_TRIGGER, 0, 0, trigger_factory_reset, {0}, NULL},
     {"Firmware Update", UI_TRIGGER, 0, 0, trigger_boot_sel,      {0}, NULL},
 };
@@ -217,7 +220,7 @@ void settings_start()
 
 void settings_end()
 {
-
+    reload_custom_scales();
 }
 
 int settings_current_key = 0;
