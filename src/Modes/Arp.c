@@ -70,6 +70,13 @@ static void load_chord(uint8_t key)
         while (j > 0 && base[j - 1] > c) { base[j] = base[j - 1]; j--; }
         base[j] = c;
     }
+
+    // Bass channel gets the root, in root position
+    uint8_t root_pos[MAX_CHORD];
+    char    name[CHORD_NAME_LEN];
+    build_chord(tc_app.key[tc_app.current_key], tc_app.octave, key, tc_app.degree,
+                tc_app.extension_count, 0, root_pos, name);
+    bass_play(root_pos[0]);
 }
 
 static void stop_locked(void)
@@ -77,6 +84,7 @@ static void stop_locked(void)
     active   = false;
     held_key = ARP_NO_KEY;
     sched_cancel(SCHED_TAG_ARP);
+    bass_stop();
     tc_app.chord_name[0] = '\0';
 }
 

@@ -85,6 +85,7 @@ extern uint8_t tc_last_key;
 extern uint8_t tc_last_control;
 
 extern float   tc_trill_pos;
+extern float   tc_trill_strength;   // summed pad strength of the current touch
 extern uint8_t tc_trill_segs;
 extern bool    tc_trill_show;
 
