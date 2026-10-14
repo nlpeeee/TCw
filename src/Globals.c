@@ -71,6 +71,9 @@ const TouchordSettings tc_app_default = {
     .arp_latch                   = true,
 
     .bass_channel                = 0,
+
+    .perform_pos_type            = PERFORM_CC,
+    .perform_size_type           = PERFORM_CC,
 };
 
 TouchordSettings tc_app;
