@@ -1,0 +1,41 @@
+name: Build firmware
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ARM toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
+
+      - name: Cache Pico SDK
+        id: sdk-cache
+        uses: actions/cache@v4
+        with:
+          path: pico-sdk
+          key: pico-sdk-2.2.0
+
+      - name: Fetch Pico SDK 2.2.0
+        if: steps.sdk-cache.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 -b 2.2.0 https://github.com/raspberrypi/pico-sdk
+          git -C pico-sdk submodule update --init --depth 1 lib/tinyusb lib/btstack lib/cyw43-driver lib/mbedtls
+
+      - name: Build (Pico 2 W, Bluetooth)
+        run: |
+          cmake -S . -B build -DPICO_SDK_PATH=$GITHUB_WORKSPACE/pico-sdk
+          cmake --build build -j4
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TCw-firmware-pico2w
+          path: build/*.uf2

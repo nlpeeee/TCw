@@ -1,3 +1,11 @@
+/*
+ * Touchord — MIDI chord controller firmware.
+ * Copyright (C) 2025-2026 MB Daugdara
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * For more info, email info@daugdara.com
+ */
+
 #ifndef TOUCHORD_STRUM_H
 #define TOUCHORD_STRUM_H
 
@@ -11,6 +19,7 @@ void strum_draw();
 void strum_update();
 void strum_key_down(uint8_t key);
 void strum_key_up(uint8_t key);
+void strum_key_up_independent(uint8_t key);
 void strum_button_down(uint8_t button);
 void strum_button_double_down(uint8_t button);
 void strum_button_up(uint8_t button);
