@@ -14,7 +14,7 @@
 #include "Types.h"
 #include "Globals.h"
 
-#define FLASH_PRESET_COUNT 8
+#define FLASH_PRESET_COUNT 32
 
 // Load preset from slot
 bool flash_load_preset(uint8_t slot, TouchordSettings* settings);

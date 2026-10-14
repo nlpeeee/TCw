@@ -36,6 +36,14 @@ uint8_t scale_intervals[SCALE_COUNT][SCALE_LEN] =
     { 0, 1, 2, 3, 4, 5, 6 }, // C1
     { 0, 1, 2, 3, 4, 5, 6 }, // C2
     { 0, 1, 2, 3, 4, 5, 6 }, // C3
+    { 0, 2, 3, 5, 7, 8, 11 }, // Harmonic minor
+    { 0, 2, 3, 5, 7, 9, 11 }, // Melodic minor
+    { 0, 2, 4, 5, 7, 8, 11 }, // Harmonic major
+    { 0, 1, 4, 5, 7, 8, 10 }, // Phrygian dominant
+    { 0, 2, 4, 6, 7, 9, 10 }, // Lydian dominant
+    { 0, 2, 4, 5, 7, 8, 10 }, // Mixolydian b6
+    { 0, 2, 4, 7, 9, 12, 14 }, // Major pentatonic, last two keys go up an octave
+    { 0, 3, 5, 7, 10, 12, 15 }, // Minor pentatonic, last two keys go up an octave
 };
 
 ChordDegree scale_chords[SCALE_COUNT][SCALE_LEN] =
@@ -52,10 +60,19 @@ ChordDegree scale_chords[SCALE_COUNT][SCALE_LEN] =
     {CHORD_MINOR, CHORD_MINOR, CHORD_MINOR, CHORD_MINOR, CHORD_MINOR, CHORD_MINOR, CHORD_MINOR},
     {CHORD_DOMINANT, CHORD_DOMINANT, CHORD_DOMINANT, CHORD_DOMINANT, CHORD_DOMINANT, CHORD_DOMINANT, CHORD_DOMINANT},
     {CHORD_DIM, CHORD_DIM, CHORD_DIM, CHORD_DIM, CHORD_DIM, CHORD_DIM, CHORD_DIM}, // Custom3
+    {CHORD_MINOR, CHORD_DIM, CHORD_AUG, CHORD_MINOR, CHORD_DOMINANT, CHORD_MAJOR, CHORD_DIM}, // Harmonic minor
+    {CHORD_MINOR, CHORD_MINOR, CHORD_AUG, CHORD_DOMINANT, CHORD_DOMINANT, CHORD_DIM, CHORD_DIM}, // Melodic minor
+    {CHORD_MAJOR, CHORD_DIM, CHORD_MINOR, CHORD_MINOR, CHORD_DOMINANT, CHORD_AUG, CHORD_DIM}, // Harmonic major
+    {CHORD_DOMINANT, CHORD_MAJOR, CHORD_DIM, CHORD_MINOR, CHORD_DIM, CHORD_AUG, CHORD_MINOR}, // Phrygian dominant
+    {CHORD_DOMINANT, CHORD_DOMINANT, CHORD_DIM, CHORD_DIM, CHORD_MINOR, CHORD_MINOR, CHORD_AUG}, // Lydian dominant
+    {CHORD_DOMINANT, CHORD_DIM, CHORD_DIM, CHORD_MINOR, CHORD_MINOR, CHORD_MAJOR, CHORD_DOMINANT}, // Mixolydian b6
+    {CHORD_MAJOR, CHORD_MINOR, CHORD_MINOR, CHORD_DOMINANT, CHORD_MINOR, CHORD_MAJOR, CHORD_MINOR}, // Major pentatonic
+    {CHORD_MINOR, CHORD_MAJOR, CHORD_MINOR, CHORD_MINOR, CHORD_MAJOR, CHORD_MINOR, CHORD_MAJOR}, // Minor pentatonic
 };
 
 const char* scale_names[SCALE_COUNT] = {
-    "NULL", "Major", "Minor", "Dorian", "Phrygian", "Lydian", "Mixolydian", "Locrian", "Custom 0", "Custom 1", "Custom 2", "Custom 3"
+    "NULL", "Major", "Minor", "Dorian", "Phrygian", "Lydian", "Mixolydian", "Locrian", "Custom 0", "Custom 1", "Custom 2", "Custom 3",
+    "Harm Minor", "Mel Minor", "Harm Major", "Phryg Dom", "Lydian Dom", "Mixo b6", "Major Pent", "Minor Pent"
 };
 
 const uint8_t chord_intervals[8][6] =
@@ -161,6 +178,15 @@ void sort_chord_notes(uint8_t *arr, int len)
 }
 
 
+// Parallel key for the added scales: minor-flavoured scales borrow from
+// major, the rest borrow from minor.
+static ScaleType parallel_scale(ScaleType quality)
+{
+    for (int i = 1; i < 3; i++)
+        if (scale_intervals[quality][i] == 3) return SCALE_MAJOR;
+    return SCALE_MINOR;
+}
+
 void build_chord(
     Scale key, int octave, int degree, ChordDegree chord_type, int extensions, int inversion,
     uint8_t* midi_out, char* chord_name) 
@@ -188,7 +214,19 @@ void build_chord(
         else 
             root += scale_intervals[SCALE_MAJOR][degree];
     }
+    else if(key.quality >= SCALE_HARMONIC_MINOR && chord_type == CHORD_PARALLEL)
+        root += scale_intervals[parallel_scale(key.quality)][degree];
     else root += scale_intervals[key.quality][degree];
+
+    // Like C minor above, the added scales with flat degrees read better spelled with flats in C.
+    if(key.quality >= SCALE_HARMONIC_MINOR && key.root == NOTE_C)
+    {
+        for (int i = 0; i < SCALE_LEN; i++)
+        {
+            uint8_t iv = scale_intervals[key.quality][i] % 12;
+            if (iv == 1 || iv == 3 || iv == 8 || iv == 10) is_flat = true;
+        }
+    }
 
     if((chord_type == CHORD_AUG || chord_type == CHORD_SUS2 || chord_type == CHORD_SUS4))
     {
@@ -201,6 +239,10 @@ void build_chord(
         {
             chord_type = scale_chords[SCALE_MINOR][degree];
         }
+        else if(key.quality >= SCALE_HARMONIC_MINOR)
+        {
+            chord_type = scale_chords[parallel_scale(key.quality)][degree];
+        }
         else
         {
             chord_type = scale_chords[key.quality-1][degree];
@@ -209,6 +251,12 @@ void build_chord(
     else
     {
         chord_type = scale_chords[key.quality][degree];
+    }
+
+    // Augmented and sus chords only have three notes, whichever table they came from.
+    if (chord_type == CHORD_AUG || chord_type == CHORD_SUS2 || chord_type == CHORD_SUS4)
+    {
+        if (extensions > 3) extensions = 3;
     }
 
     for (int i = 0; i < extensions; i++)

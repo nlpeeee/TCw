@@ -114,7 +114,8 @@ const char* roll_sel[COMPOSE_ROLL_COUNT] = {"Off", "10 ms", "20 ms", "30 ms", "5
 const char* perform_type_sel[PERFORM_TARGET_COUNT] = {"CC", "Bend", "Press"};
 const char* bass_sel[17] = {"Off", "Ch 1", "Ch 2", "Ch 3", "Ch 4", "Ch 5", "Ch 6", "Ch 7", "Ch 8",
                             "Ch 9", "Ch 10", "Ch 11", "Ch 12", "Ch 13", "Ch 14", "Ch 15", "Ch 16"};
-const char* scale_sel[12] = {"ERR", "Major", "Minor", "Dorian", "Phrygian", "Lydian", "Mixolydian", "Locrian", "Custom 0", "Custom 1", "Custom 2", "Custom 3"};
+const char* scale_sel[SCALE_COUNT] = {"ERR", "Major", "Minor", "Dorian", "Phrygian", "Lydian", "Mixolydian", "Locrian", "Custom 0", "Custom 1", "Custom 2", "Custom 3",
+                                       "Harm Minor", "Mel Minor", "Harm Major", "Phryg Dom", "Lydian Dom", "Mixo b6", "Major Pent", "Minor Pent"};
 
 UINode tree[MAX_UI_NODES] = {
     // 0: ROOT "Settings"
@@ -124,8 +125,8 @@ UINode tree[MAX_UI_NODES] = {
     {"Modes", UI_SUBMENU, 3, 7,  NULL, {0}, NULL},
     {"MIDI", UI_SUBMENU, 6, 28,  NULL, {0}, NULL},
     {"Customize", UI_SUBMENU, 7, 34,  NULL, {0}, NULL},
-    {"Load Preset", UI_INT, 8, 0, trigger_load_preset, {.i_val = &preset_slot_load}, NULL},
-    {"Save Preset", UI_INT, 8, 0, trigger_save_preset, {.i_val = &preset_slot_save}, NULL},
+    {"Load Preset", UI_INT, FLASH_PRESET_COUNT, 0, trigger_load_preset, {.i_val = &preset_slot_load}, NULL},
+    {"Save Preset", UI_INT, FLASH_PRESET_COUNT, 0, trigger_save_preset, {.i_val = &preset_slot_save}, NULL},
     {"Firmware", UI_SUBMENU, 2, 55, NULL, {0}, NULL},
 
     // 7-9: Modes Settings
@@ -177,13 +178,13 @@ UINode tree[MAX_UI_NODES] = {
 
     // 41-42 Customize.B1
     {"Root", UI_ENUM, 17, 0, NULL, {.en_val = &tc_app.key[0].root}, root_names},
-    {"Scale", UI_ENUM, 12, 1, NULL, {.en_val = &tc_app.key[0].quality}, scale_sel},
+    {"Scale", UI_ENUM, SCALE_COUNT, 1, NULL, {.en_val = &tc_app.key[0].quality}, scale_sel},
     // 43-44 Customize.B2
     {"Root", UI_ENUM, 17, 0, NULL, {.en_val = &tc_app.key[1].root}, root_names},
-    {"Scale", UI_ENUM, 12, 1, NULL, {.en_val = &tc_app.key[1].quality}, scale_sel},
+    {"Scale", UI_ENUM, SCALE_COUNT, 1, NULL, {.en_val = &tc_app.key[1].quality}, scale_sel},
     // 45-46 Customize.B3
     {"Root", UI_ENUM, 17, 0, NULL, {.en_val = &tc_app.key[2].root}, root_names},
-    {"Scale", UI_ENUM, 12, 1, NULL, {.en_val = &tc_app.key[2].quality}, scale_sel},
+    {"Scale", UI_ENUM, SCALE_COUNT, 1, NULL, {.en_val = &tc_app.key[2].quality}, scale_sel},
 
     // 47-48 Customize.C0
     {"Intervals", UI_PER_BUTTON_INT,  12, 0, trigger_custom_scale, {.i_val  = tc_app.custom_scale_intervals[0]}, NULL},
@@ -256,6 +257,11 @@ void settings_draw()
         case UI_INT:
             if(cn->data.i_val)
                 draw_int_center(*cn->data.i_val);
+            if (cn->data.i_val == &preset_slot_load || cn->data.i_val == &preset_slot_save)
+            {
+                const char* status = flash_preset_exists(*cn->data.i_val) ? "Saved" : "Empty";
+                ssd1306_draw_string(&tc_disp, 64 - (strlen(status) * 6) / 2, 44, 1, status);
+            }
         break;
         case UI_TOGGLE:
             if (cn->data.toggle)

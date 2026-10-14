@@ -83,7 +83,16 @@ typedef enum
     SCALE_CUSTOM0,
     SCALE_CUSTOM1,
     SCALE_CUSTOM2,
-    SCALE_CUSTOM3
+    SCALE_CUSTOM3,
+    // Added after the custom scales so presets saved before them still load.
+    SCALE_HARMONIC_MINOR,
+    SCALE_MELODIC_MINOR,
+    SCALE_HARMONIC_MAJOR,
+    SCALE_PHRYGIAN_DOMINANT,
+    SCALE_LYDIAN_DOMINANT,
+    SCALE_MIXOLYDIAN_B6,
+    SCALE_MAJOR_PENTATONIC,
+    SCALE_MINOR_PENTATONIC
 } ScaleType;
 
 typedef enum
@@ -102,7 +111,7 @@ typedef enum
     COMPOSE_JAZZ
 } ComposeType;
 
-#define SCALE_COUNT 12
+#define SCALE_COUNT 20
 
 typedef struct
 {
