@@ -23,8 +23,8 @@
 // incoming MIDI clock while the host is playing, otherwise the Tempo setting
 // (or the incoming clock's tempo, while the host is stopped).
 //
-// Touch bar, 8 segments: 6 rates, then Range (each touch steps 1-4 octaves),
-// then Latch on/off. Double-click B1/B2 steps the pattern.
+// Touch bar, 8 segments: 6 rates, then 1 octave, then 2 octaves. Latch and
+// 3-4 octave ranges are in Settings. Double-click B1/B2 steps the pattern.
 
 enum { ARP_UP = 0, ARP_DOWN, ARP_UPDOWN, ARP_RANDOM, ARP_CHORD };
 
@@ -37,8 +37,6 @@ static const uint8_t rate_ticks[ARP_RATE_COUNT] = { 24, 12, 8, 6, 4, 3 };   // M
 static const uint8_t gate_pct[ARP_GATE_COUNT]   = { 25, 50, 75, 95 };
 
 #define ARP_TRILL_SEGS  8
-#define ARP_SEG_RANGE   6
-#define ARP_SEG_LATCH   7
 #define ARP_NO_KEY      0xFF
 
 // Shared between core 0 (keys, arp_task) and core 1 (touch bar, mode
@@ -142,6 +140,12 @@ void arp_task(void)
 
     critical_section_enter_blocking(&tc_app_lock);
     if (!active) { critical_section_exit(&tc_app_lock); return; }
+    if (!tc_app.arp_latch && tc_key_states[held_key]) {
+        // Latch was turned off while no key was held.
+        stop_locked();
+        critical_section_exit(&tc_app_lock);
+        return;
+    }
 
     uint32_t tps = rate_ticks[clamp_setting(tc_app.arp_rate, ARP_RATE_COUNT)];
 
@@ -268,24 +272,15 @@ void arp_trill_down(float pos, float size)
     if (seg < 0) seg = 0;
     if (seg >= ARP_TRILL_SEGS) seg = ARP_TRILL_SEGS - 1;
     if (seg == trill_seg_prev) return;
-    bool fresh = trill_seg_prev < 0;
     trill_seg_prev = seg;
-    // Range and Latch act on a tap, not when a rate slide runs into them.
-    if (seg >= ARP_RATE_COUNT && !fresh) return;
 
     critical_section_enter_blocking(&tc_app_lock);
     if (seg < ARP_RATE_COUNT) {
         tc_app.arp_rate = seg;
         snprintf(arp_tooltip, sizeof arp_tooltip, "Rate %s", arp_rate_names[seg]);
-    } else if (seg == ARP_SEG_RANGE) {
-        tc_app.arp_octaves = (clamp_setting(tc_app.arp_octaves, ARP_OCTAVES_MAX) + 1) % ARP_OCTAVES_MAX;
-        snprintf(arp_tooltip, sizeof arp_tooltip, "Range %s", arp_octave_names[tc_app.arp_octaves]);
     } else {
-        tc_app.arp_latch = !tc_app.arp_latch;
-        snprintf(arp_tooltip, sizeof arp_tooltip, "Latch %s", tc_app.arp_latch ? "On" : "Off");
-        // Unlatching with no key held stops the arp.
-        if (!tc_app.arp_latch && active && (held_key == ARP_NO_KEY || tc_key_states[held_key]))
-            stop_locked();
+        tc_app.arp_octaves = seg - ARP_RATE_COUNT;   // 0 = 1 octave, 1 = 2 octaves
+        snprintf(arp_tooltip, sizeof arp_tooltip, "Range %s", arp_octave_names[tc_app.arp_octaves]);
     }
     critical_section_exit(&tc_app_lock);
 }
