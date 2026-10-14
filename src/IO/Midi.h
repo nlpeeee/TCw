@@ -32,6 +32,14 @@ void send_aftertouch(uint8_t channel, uint8_t pressure);
 
 void send_midi_cc(uint8_t channel, uint8_t cc_num, uint8_t cc_value);
 
+// value is 0..16383, 8192 = centre
+void send_pitch_bend(uint8_t channel, uint16_t value);
+
+// Bass on its own channel (Settings > MIDI > Bass): the chord root an octave
+// down. Off when tc_app.bass_channel is 0. Call with tc_app_lock held.
+void bass_play(uint8_t chord_root);
+void bass_stop(void);
+
 void send_midi_chord(uint8_t channel, uint8_t status, uint8_t* notes, uint8_t length, uint8_t velocity);
 
 void send_midi_chord_diff(const uint8_t* prev, const uint8_t* curr,

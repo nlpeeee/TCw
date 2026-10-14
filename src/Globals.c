@@ -69,6 +69,11 @@ const TouchordSettings tc_app_default = {
     .arp_gate                    = 1,   // 50%
     .arp_bpm                     = 120,
     .arp_latch                   = true,
+
+    .bass_channel                = 0,
+
+    .perform_pos_type            = PERFORM_CC,
+    .perform_size_type           = PERFORM_CC,
 };
 
 TouchordSettings tc_app;
@@ -117,6 +122,7 @@ uint8_t tc_last_key = 0;
 uint8_t tc_last_control = 0;
 
 float   tc_trill_pos = 0.0f;
+float   tc_trill_strength = 0.0f;
 uint8_t tc_trill_segs = 0;
 bool    tc_trill_show = true;
 

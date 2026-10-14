@@ -188,6 +188,7 @@ void poll_trill_bar(TrillBar* bar)
 
     if (curr_state) {
         tc_trill_pos = pos;
+        tc_trill_strength = trill_calculate_strength(bar);
         tc_trill_down(pos, size);
     } else if (tc_touch_state) {
         tc_trill_up();

@@ -150,6 +150,18 @@ float trill_calculate_touch(TrillBar* bar)
     return sum > 0.0f ? (weighted_sum / sum)/25.0f : -1.0f;
 }
 
+// Summed strength of the lit pads: grows as a fingertip presses flatter,
+// wherever it is on the bar.
+float trill_calculate_strength(TrillBar* bar)
+{
+    float sum = 0.0f;
+    for (size_t i = 0; i < 26; ++i) {
+        float norm_intensity = (float)bar->raw_data[i] / (float)TRILL_MAX_SIZE;
+        if (norm_intensity > 0.05) sum += norm_intensity;
+    }
+    return sum;
+}
+
 float trill_calculate_size(TrillBar* bar, float pos)
 {
     if(pos >= 0.0f)

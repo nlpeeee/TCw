@@ -97,6 +97,14 @@ typedef enum
 
 typedef enum
 {
+    PERFORM_CC = 0,         // the Pos CC / Size CC number
+    PERFORM_BEND,           // pitch bend
+    PERFORM_PRESSURE,       // channel pressure
+    PERFORM_TARGET_COUNT
+} PerformTarget;
+
+typedef enum
+{
     COMPOSE_DEGREE = 0,
     // COMPOSE_SUS,
     COMPOSE_INV,
@@ -160,6 +168,11 @@ typedef struct
     uint8_t arp_gate;
     uint8_t arp_bpm;        // tempo when no MIDI clock is coming in
     bool arp_latch;
+
+    uint8_t bass_channel;   // 0 = off, else MIDI channel + 1
+
+    uint8_t perform_pos_type;   // PerformTarget: what Perform's Pos axis sends
+    uint8_t perform_size_type;  // PerformTarget: what Perform's Size axis sends
 } TouchordSettings;
 
 typedef enum

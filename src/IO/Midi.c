@@ -9,6 +9,7 @@
 #include "Midi.h"
 #include "BleMidi.h"
 #include "Timing/MidiClock.h"
+#include "Globals.h"
 #include "tusb.h"
 #include "hardware/uart.h"
 #include "pico/util/queue.h"
@@ -163,10 +164,45 @@ void send_midi_cc(uint8_t channel, uint8_t cc_num, uint8_t cc_value) {
     uint8_t status = 0xB0 | (channel & 0x0F); 
     uint8_t packet[3] = {
         status,
-        cc_num,
-        cc_value
+        cc_num & 0x7F,
+        cc_value & 0x7F
     };
     midi_out_send(packet, 3);
+}
+
+void send_pitch_bend(uint8_t channel, uint16_t value)
+{
+    if (value > 16383) value = 16383;
+    uint8_t packet[3] = {
+        0xE0 | (channel & 0x0F),
+        value & 0x7F,
+        (value >> 7) & 0x7F
+    };
+    midi_out_send(packet, 3);
+}
+
+// Remembers its own channel so changing the setting never strands a note.
+static bool    bass_on = false;
+static uint8_t bass_note, bass_ch;
+
+void bass_stop(void)
+{
+    if (!bass_on) return;
+    send_midi_note(bass_ch, NOTE_OFF, bass_note, tc_app.velocity);
+    bass_on = false;
+}
+
+void bass_play(uint8_t chord_root)
+{
+    if (tc_app.bass_channel == 0 || chord_root == 0) { bass_stop(); return; }
+    uint8_t ch   = tc_app.bass_channel - 1;
+    uint8_t note = chord_root >= 12 ? chord_root - 12 : chord_root;
+    if (bass_on && note == bass_note && ch == bass_ch) return;
+    bass_stop();
+    send_midi_note(ch, NOTE_ON, note, tc_app.velocity);
+    bass_on = true;
+    bass_note = note;
+    bass_ch   = ch;
 }
 
 void send_poly_aftertouch(uint8_t channel, uint8_t note, uint8_t pressure) {
@@ -174,8 +210,8 @@ void send_poly_aftertouch(uint8_t channel, uint8_t note, uint8_t pressure) {
 
     uint8_t packet[3] = {
         status,
-        note,
-        pressure
+        note & 0x7F,
+        pressure & 0x7F
     };
     midi_out_send(packet, 3);
 }
@@ -186,7 +222,7 @@ void send_aftertouch(uint8_t channel, uint8_t pressure)
 
     uint8_t packet[2] = {
         status,
-        pressure
+        pressure & 0x7F
     };
     midi_out_send(packet, 2);
 }
