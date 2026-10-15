@@ -398,7 +398,7 @@ static void draw_help(void)
 {
     static const char* const lines[] = {
         "Tap B0 next mode  B1/B2 octave",
-        "Hold B0 alone for Settings",
+        "Hold B0: Settings  Tap B4: loop",
         "Hold a button + slide the bar:",
         "B0 Mode  B1 Play  B2 Touch",
         "B3 Size  B4 Chords  B5 Key",

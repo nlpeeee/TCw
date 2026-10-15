@@ -7,6 +7,7 @@
  */
 
 #include "Drum.h"
+#include "Timing/Looper.h"
 #include "Globals.h"
 #include "Timing/Quantize.h"
 #include "Sync.h"
@@ -64,7 +65,7 @@ void drum_draw()
     const int pad_y   = 14;
     for (int i = 0; i < NUM_KEYS; i++) {
         int px = start_x + i * (pad_w + gap);
-        if (!tc_key_states[i]) ssd1306_draw_square(&tc_disp, px, pad_y, pad_w, pad_h);
+        if (!tc_key_states[i] || looper_holds(i)) ssd1306_draw_square(&tc_disp, px, pad_y, pad_w, pad_h);
         else                   ssd1306_draw_empty_square(&tc_disp, px, pad_y, pad_w, pad_h);
         if (kit())
             ssd1306_draw_string_with_font(&tc_disp, px, pad_y + pad_h + 2, 1, font_3x6, kit_labels[i]);

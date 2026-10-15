@@ -7,6 +7,7 @@
  */
 
 #include "Graphics.h"
+#include "Timing/Looper.h"
 #include "ssd1306.h"
 #include "font.h"
 #include "Globals.h"
@@ -46,7 +47,7 @@ static void clear_small_string(int x, int y, const char *str)
 }
 
 // The chords the 7 green keys play, in a row lined up with them, with any
-// key being held shown inverted.
+// key being held, by the player or the loop, shown inverted.
 void draw_chord_row(uint8_t y)
 {
     const int x0 = 8, cell = (128 - x0) / NUM_KEYS;
@@ -60,7 +61,7 @@ void draw_chord_row(uint8_t y)
         int w = (int)strlen(label) * adv - font_3x6[2];
         int cx = x0 + k * cell;
         int tx = cx + (cell - w) / 2;
-        if (!tc_key_states[k]) {
+        if (!tc_key_states[k] || looper_holds(k)) {
             ssd1306_draw_square(&tc_disp, cx, y - 1, cell - 1, 8);
             clear_small_string(tx, y, label);
         } else {

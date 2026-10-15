@@ -10,6 +10,7 @@
 #include "Globals.h"
 #include "Sync.h"
 #include "Timing/MidiClock.h"
+#include "Timing/Looper.h"
 #include "Rendering/Graphics.h"
 #include "pico/time.h"
 #include <stdio.h>
@@ -78,8 +79,7 @@ static bool applies(TouchordMode mode)
 
 static void send_up(uint8_t key)
 {
-    tc_key_up(key);
-    tc_key_up_independent(key);
+    looper_live_up(key);
 }
 
 static void release_tap(void)
@@ -100,7 +100,7 @@ static void send_held_ups(void)
 // Play now. Keys let go while an earlier press waited go after it.
 static void play(uint8_t key)
 {
-    tc_key_down(key);
+    looper_live_down(key);
     send_held_ups();
 }
 
@@ -138,7 +138,7 @@ void quant_key_down(uint8_t key)
     TouchordMode mode = tc_app_get_mode();
     if (!applies(mode)) {
         release_pending();
-        tc_key_down(key);
+        looper_live_down(key);
         return;
     }
 

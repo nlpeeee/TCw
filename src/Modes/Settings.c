@@ -14,6 +14,7 @@
 #include "Helper.h"
 #include "Sync.h"
 #include "Data/Flash.h"
+#include "Timing/Looper.h"
 #include "Data/Memories.h"
 #include "IO/BleMidi.h"
 #include "Timing/MidiClock.h"
@@ -88,6 +89,9 @@ void trigger_factory_reset(const DataU* data)
     reload_custom_scales();
     flash_clear_all_presets();
     flash_clear_last();
+    flash_clear_loops();
+    looper_clear();
+    looper_mark_saved();
     trigger_overlay("Factory Reset", 1000);
 }
 

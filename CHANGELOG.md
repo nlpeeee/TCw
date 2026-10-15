@@ -14,6 +14,7 @@ when cutting a release.
 
 ### Added
 
+- Looper: tap B4 to record a progression of green-key presses and loop it, tap to stop/play, hold 2 s to clear. Plays through the current mode, follows host clock or Arp Tempo, saved with song memories and autosave; starter memories include demo loops.
 - A "Connect USB or Bluetooth" screen until a host connects.
 - Reset Factory and Firmware Update ask for a second OK press.
 - The setup is saved automatically and restored at power-on, including the mode (Touchord used to always start in Compose).
