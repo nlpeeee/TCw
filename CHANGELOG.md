@@ -27,6 +27,11 @@ when cutting a release.
 - Preset slots are shown numbered from 1.
 - B1/B2 no longer double-click: a tap changes octave on release, without the 300 ms wait. Arp pattern, Strum size and Omni span moved to hold-and-slide (B1, B3, B1).
 - Compose's bar labels read "6 notes", "5 notes", "4 notes", "Flip 4", "Flip 3" instead of "Ext 6" ... "Ext 3 Par".
+- Compose voice leading is on by default.
+- Chord roots stay between F# below and F above the octave's C, so a key change doesn't jump most of an octave.
+- Chord modes keep to octaves 2-6.
+- B0 steps through Compose, Arp, Strum, Omni, Perform, Drum.
+- Drum mode defaults to a General MIDI kit; hold B1 and slide for the old notes-in-a-row layout.
 - Arp's bar rates run fastest at the far end, like every other bar control.
 - Perform's "Pos Keep" / "Size Keep" are renamed "Pos Resets" / "Size Resets", which is what they do.
 - `Touchord-single.uf2` (TCw wiring) reads the white buttons in reverse pin order, so B0 is the leftmost button on the TCw as on the Touchord.

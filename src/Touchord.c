@@ -337,7 +337,7 @@ void io_task()
 
             int direction = (currentMode == TOUCHORD_SETTINGS || prevMode == TOUCHORD_SETTINGS)
                             ? 0
-                            : (currentMode > prevMode ? 1 : -1);
+                            : (tc_mode_position(currentMode) > tc_mode_position(prevMode) ? 1 : -1);
 
             anim_transition(prev_fb, next_fb, direction);
             prevMode = currentMode;

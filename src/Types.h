@@ -120,6 +120,13 @@ typedef struct
     ScaleType quality;
 } Scale;
 
+typedef enum
+{
+    DRUM_KIT = 0,           // General MIDI kit: kick, snare, clap, hats, tom, crash
+    DRUM_NOTES,             // seven notes in a row from the octave's C
+    DRUM_LAYOUT_COUNT
+} DrumLayout;
+
 typedef struct
 {
     uint32_t magic;
@@ -176,6 +183,8 @@ typedef struct
     uint8_t perform_size_type;  // PerformTarget: what Perform's Size axis sends
 
     uint8_t chord_set;          // index into chord_sets[] in Notes/ChordSets.c
+
+    uint8_t drum_layout;        // DrumLayout: General MIDI kit or notes in a row
 } TouchordSettings;
 
 typedef enum

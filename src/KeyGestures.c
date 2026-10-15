@@ -16,6 +16,7 @@
 #include "Rendering/Graphics.h"
 #include "Modes/Compose.h"
 #include "Modes/Arp.h"
+#include "Modes/Drum.h"
 #include "ssd1306.h"
 #include "font.h"
 #include <stdio.h>
@@ -46,7 +47,7 @@ static const Note key_roots[KEY_ZONES] = {
 };
 static const char* const size_names[SIZE_ZONES] = { "Simple", "Rich", "Lush" };
 
-// Play modes in B0's order; Settings is reached by holding B0 instead.
+// Play modes, in B0's order on the bar; Settings is reached by holding B0.
 #define MODE_ZONES 6
 #define mode_names tc_mode_names
 // What the bar does in each mode, for the MODE panel and the help screen.
@@ -82,7 +83,7 @@ static Gesture held_gesture(void)
     if (chords && down(4)) return GESTURE_CHORDS;
     if (chords && down(3)) return GESTURE_SIZE;
     if (down(0)) return GESTURE_MODE;
-    if (chords && down(1)) return GESTURE_PLAY;
+    if (down(1)) return GESTURE_PLAY;
     if (chords && down(2)) return GESTURE_TOUCH;
     return GESTURE_NONE;
 }
@@ -114,6 +115,7 @@ static int play_zones(void)
         case TOUCHORD_PERFORM: return PERFORM_TARGET_COUNT;
         case TOUCHORD_STRUM:
         case TOUCHORD_OMNI:    return SPAN_ZONES;
+        case TOUCHORD_DRUM:    return DRUM_LAYOUT_COUNT;
         default:               return 0;
     }
 }
@@ -129,6 +131,7 @@ static int play_zone(void)
         case TOUCHORD_PERFORM: return clamp_zone(tc_app.perform_pos_type, n);
         case TOUCHORD_STRUM:
         case TOUCHORD_OMNI:    return clamp_zone(tc_app.octave_count - 1, n);
+        case TOUCHORD_DRUM:    return clamp_zone(tc_app.drum_layout, n);
         default:               return 0;
     }
 }
@@ -141,6 +144,7 @@ static const char* play_value(int z)
         case TOUCHORD_PERFORM: return sends_names[z];
         case TOUCHORD_STRUM:
         case TOUCHORD_OMNI:    return span_names[z];
+        case TOUCHORD_DRUM:    return drum_layout_names[z];
         default:               return "";
     }
 }
@@ -153,6 +157,7 @@ static const char* play_label(void)
         case TOUCHORD_PERFORM: return "What the bar sends";
         case TOUCHORD_STRUM:
         case TOUCHORD_OMNI:    return "How far the bar reaches";
+        case TOUCHORD_DRUM:    return "Kit: drums  Notes: in a row";
         default:               return "";
     }
 }
@@ -205,7 +210,7 @@ static int current_zone(Gesture g)
         case GESTURE_KEY:    return key_zone();
         case GESTURE_CHORDS: return tc_app.chord_set < CHORD_SET_COUNT ? tc_app.chord_set : CHORD_SET_DEFAULT;
         case GESTURE_SIZE:   return size_zone();
-        case GESTURE_MODE:   return pending_mode;
+        case GESTURE_MODE:   return tc_mode_position(pending_mode);
         case GESTURE_PLAY:   return play_zone();
         case GESTURE_TOUCH:  return touch_zone();
         default:             return 0;
@@ -267,7 +272,7 @@ static void apply_zone(Gesture g, int z)
             tc_app.extension_count = (uint8_t)(SIZE_MIN + z);
             break;
         case GESTURE_MODE:
-            pending_mode = (TouchordMode)z;
+            pending_mode = tc_mode_order[z];
             break;
         case GESTURE_PLAY:
             switch (play_mode()) {
@@ -276,6 +281,7 @@ static void apply_zone(Gesture g, int z)
                 case TOUCHORD_PERFORM: tc_app.perform_pos_type = (uint8_t)z; break;
                 case TOUCHORD_STRUM:
                 case TOUCHORD_OMNI:    tc_app.octave_count = (uint8_t)(z + 1); break;
+                case TOUCHORD_DRUM:    tc_app.drum_layout = (uint8_t)z; break;
                 default: break;
             }
             break;
@@ -430,7 +436,7 @@ void key_gesture_draw(void)
         case GESTURE_KEY:    title = "KEY";    value = root_names[key->root]; break;
         case GESTURE_CHORDS: title = "CHORDS"; value = key_scale_name(*key);  break;
         case GESTURE_SIZE:   title = "SIZE";   value = size_names[cur];       break;
-        case GESTURE_MODE:   title = "MODE";   value = mode_names[cur];       break;
+        case GESTURE_MODE:   title = "MODE";   value = mode_names[pending_mode]; break;
         case GESTURE_PLAY:   title = "PLAY";   value = play_value(cur);       break;
         case GESTURE_TOUCH:
             title = "TOUCH";
@@ -456,7 +462,7 @@ void key_gesture_draw(void)
             draw_small_centered(36, buf);
             break;
         case GESTURE_MODE:
-            draw_small_centered(36, bar_names[cur]);
+            draw_small_centered(36, bar_names[pending_mode]);
             draw_small_centered(55, "Let go to switch");
             break;
         case GESTURE_PLAY:

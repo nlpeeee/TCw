@@ -72,8 +72,11 @@ extern volatile bool tc_connected;
 // Set when the whole setup was swapped (a song memory), so core 1 restarts
 // the mode even if it is the same one.
 extern volatile bool tc_mode_restart;
-// Play modes in B0 order.
+// Names of the play modes, by TouchordMode.
 extern const char* const tc_mode_names[6];
+// The play modes in the order a B0 tap steps through them.
+extern const TouchordMode tc_mode_order[6];
+int tc_mode_position(TouchordMode mode);
 
 extern TrillBar tc_bar;
 extern ssd1306_t tc_disp;

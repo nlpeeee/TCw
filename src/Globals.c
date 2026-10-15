@@ -50,7 +50,7 @@ const TouchordSettings tc_app_default = {
 
     .compose_type       = COMPOSE_DEGREE,
     .compose_sustain    = false,
-    .compose_voice_lead = false,
+    .compose_voice_lead = true,
 
     .perform_pos_cc              = MIDI_CUTOFF,
     .perform_size_cc             = MIDI_MOD,
@@ -77,6 +77,8 @@ const TouchordSettings tc_app_default = {
     .perform_size_type           = PERFORM_CC,
 
     .chord_set                   = CHORD_SET_DEFAULT,
+
+    .drum_layout                 = DRUM_KIT,
 };
 
 TouchordSettings tc_app;
@@ -111,6 +113,16 @@ volatile bool tc_trigger_bootsel = false;
 volatile bool tc_connected = false;
 volatile bool tc_mode_restart = false;
 const char* const tc_mode_names[6] = { "Compose", "Arp", "Perform", "Strum", "Omni", "Drum" };
+const TouchordMode tc_mode_order[6] = {
+    TOUCHORD_COMPOSE, TOUCHORD_ARP, TOUCHORD_STRUM, TOUCHORD_OMNI, TOUCHORD_PERFORM, TOUCHORD_DRUM,
+};
+
+int tc_mode_position(TouchordMode mode)
+{
+    for (int i = 0; i < 6; i++)
+        if (tc_mode_order[i] == mode) return i;
+    return 6;   // Settings, after the play modes
+}
 
 TrillBar tc_bar;
 ssd1306_t tc_disp;
