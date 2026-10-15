@@ -43,13 +43,26 @@ jobs:
           name: TCw-firmware-pico2w
           path: build/*.uf2
 
+      # Release text: license, source and the upstream notice, which GPL-3.0 and
+      # MB Daugdara's terms ask to travel with the binaries.
+      - name: Write release notice
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+        run: |
+          cat > notice.md <<EOF
+          Use Touchord-single.uf2 for the TCw prototype (Trill and screen share I2C0), Touchord-dual.uf2 for the Touchord PCB.
+
+          Built from https://github.com/$GITHUB_REPOSITORY/tree/$GITHUB_SHA (the source archives below are the same commit).
+
+          TCw is a modified version of Touchord by MB Daugdara, licensed under the GNU General Public License v3.0 or later (see LICENSE). It is not made, sponsored or endorsed by MB Daugdara. Touchord™ and the Touchord™ logo are trademarks of MB Daugdara. Full legal notice: https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_SHA/README.md#license-and-notice
+          EOF
+
       # A version tag (e.g. v1.1.0) publishes a release with both .uf2 files.
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: gh release create "$GITHUB_REF_NAME" build/*.uf2 --generate-notes --title "TCw $GITHUB_REF_NAME"
+        run: gh release create "$GITHUB_REF_NAME" build/*.uf2 --notes-file notice.md --generate-notes --title "TCw $GITHUB_REF_NAME"
 
       # Every push to main replaces the rolling "latest" pre-release.
       - name: Update latest pre-release
@@ -60,5 +73,4 @@ jobs:
         run: |
           gh release delete latest --cleanup-tag --yes || true
           gh release create latest build/*.uf2 --prerelease --target "$GITHUB_SHA" \
-            --title "Latest build from main" \
-            --notes "Built automatically from $GITHUB_SHA. Use Touchord-single.uf2 for the TCw prototype (Trill and screen share I2C0), Touchord-dual.uf2 for the Touchord PCB."
+            --title "Latest build from main" --notes-file notice.md

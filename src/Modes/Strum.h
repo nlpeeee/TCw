@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * For more info, email info@daugdara.com
+ *
+ * Modified for TCw (https://github.com/nlpeeee/TCw); changes are listed in
+ * CHANGELOG.md and the git history.
  */
 
 #ifndef TOUCHORD_STRUM_H

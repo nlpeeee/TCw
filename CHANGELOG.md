@@ -35,6 +35,7 @@ when cutting a release.
 - Arp's bar rates run fastest at the far end, like every other bar control.
 - Perform's "Pos Keep" / "Size Keep" are renamed "Pos Resets" / "Size Resets", which is what they do.
 - `Touchord-single.uf2` (TCw wiring) reads the white buttons in reverse pin order, so B0 is the leftmost button on the TCw as on the Touchord.
+- README has a License and notice section (GPL-3.0, CERN-OHL-S-2.0, not endorsed by MB Daugdara, upstream legal notice), release notes carry the same notice and source link, and every source file TCw changed or added says so in its header.
 
 ### Fixed
 

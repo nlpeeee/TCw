@@ -9,6 +9,33 @@ It's just a prototype. Thanks
 
 ![Internal](https://github.com/nlpeeee/TCw/blob/main/img/internal.jpeg)
 
+## License and notice
+
+TCw is a modified version of [Touchord](https://github.com/dovker/Touchord) by MB Daugdara. It is an independent, non-commercial project and is not made, sponsored or endorsed by MB Daugdara. Touchord™ and the Touchord™ logo are trademarks of MB Daugdara.
+
+- The firmware (everything under `src/`) is licensed under the GNU General Public License v3.0 or later: see [LICENSE](LICENSE). The TCw changes are listed in [CHANGELOG.md](CHANGELOG.md), below under [Changes over upstream Touchord](#changes-over-upstream-touchord), and in the git history.
+- The 3D model design files and PCB files are licensed under CERN-OHL-S-2.0: see [Hardware/LICENSE](Hardware/LICENSE).
+- The `.uf2` files on the [releases](https://github.com/nlpeeee/TCw/releases) page are built from this repository by GitHub Actions; each release links to the exact commit it was built from.
+
+Upstream's licensing and legal notice, which must accompany modified versions, is reproduced here unchanged:
+
+> **Copyright © 2026 MB Daugdara. All rights reserved.**
+>
+> **Trademarks:**
+> - Touchord™ is a trademark of MB Daugdara
+> - Touchord™ logo is a trademark of MB Daugdara
+>
+> **Intellectual Property:**
+> - The Touchord name and logo are the exclusive property of MB Daugdara
+> - Firmware is licensed under GNU General Public License v3.0
+> - The 3D model design files and PCB Files are licensed under CERN-OHL-S-2.0
+> - The license does not grant rights to use the company name or logo
+>
+> **Restrictions:**
+> - You may not use the company name or logo to endorse derivative commercial works
+> - You must include this notice when distributing modified versions
+> - See LICENSE file for full CERN-OHL-S-2.0 terms
+
 ## How to play
 
 New to Touchord? Read the **[manual](docs/MANUAL.md)**, or keep the cheat sheet below to hand. Its HTML source is [docs/cheat-sheet.html](docs/cheat-sheet.html).
