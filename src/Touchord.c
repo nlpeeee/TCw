@@ -24,6 +24,7 @@
 #include "Timing/Scheduler.h"
 #include "Timing/MidiClock.h"
 #include "Data/Flash.h"
+#include "Data/Memories.h"
 #include "Notes/Note.h"
 #include "KeyGestures.h"
 #include "Sync.h"
@@ -49,85 +50,138 @@ static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 // Holding B0 this long jumps to Settings; a shorter press fires on release.
 #define B0_HOLD_MS 600
 
+// B0 + B2 + B4 held this long drops into BOOTSEL, so a stray press can't.
+#define BOOTSEL_HOLD_MS 3000
+
 // Set by core 1 once it can be paused for flash writes (see io_task).
 static volatile bool core1_lockout_ready = false;
 
-// Fire a held-back single/double click on a double-click-enabled button.
-static void flush_pending_click(void)
-{
-    if (tc_last_control_clicks >= 2)      tc_button_double_down(tc_last_control);
-    else if (tc_last_control_clicks == 1) tc_button_down(tc_last_control);
-    tc_last_control_clicks = 0;
-}
-
 // B0 cycles modes on a short press and opens Settings when held. Its press
-// is held back until release (or the hold time) so the two don't collide.
+// is held back until release (or the hold time) so the two don't collide,
+// and a hold that slides on the bar to pick a mode does neither.
 static uint64_t b0_down_time = 0;
 static bool b0_held = false;
 
 static void poll_b0(bool curr_state, uint64_t now)
 {
     if (tc_control_states[0] && !curr_state) {
-        flush_pending_click();
         b0_down_time = now;
         b0_held = false;
+        tc_button_slid[0] = false;
     } else if (!tc_control_states[0] && curr_state) {
-        if (!b0_held) tc_button_down(0);
+        if (!b0_held && !tc_button_slid[0]) tc_button_down(0);
         tc_button_up(0);
-    } else if (!curr_state && !b0_held && now - b0_down_time >= B0_HOLD_MS) {
+    } else if (!curr_state && !b0_held && !tc_button_slid[0]
+               && now - b0_down_time >= B0_HOLD_MS
+               && tc_control_states[2] && tc_control_states[4]) {
+        // Not while B2 and B4 are down, so the BOOTSEL hold stays where it is.
         b0_held = true;
         if (tc_app_get_mode() != TOUCHORD_SETTINGS)
             tc_app_set_mode(TOUCHORD_SETTINGS);
     }
 }
 
+// Hold B0 + B2 + B4 to drop into BOOTSEL, with a countdown on screen.
+static void poll_bootsel_combo(uint64_t now)
+{
+    static uint64_t combo_start = 0;
+    static int shown = -1;
+
+    if (tc_control_states[0] || tc_control_states[2] || tc_control_states[4]) {
+        if (shown >= 0) trigger_overlay("", 0);
+        combo_start = 0;
+        shown = -1;
+        return;
+    }
+    if (combo_start == 0) combo_start = now;
+    // Letting go afterwards neither changes mode nor octave.
+    b0_held = true;
+    tc_button_slid[2] = true;
+    uint64_t held = now - combo_start;
+    if (held >= BOOTSEL_HOLD_MS) {
+        tc_trigger_bootsel = true;
+        return;
+    }
+    int left = (int)((BOOTSEL_HOLD_MS - held + 999) / 1000);
+    if (left != shown) {
+        char msg[24];
+        snprintf(msg, sizeof msg, "Firmware mode in %d", left);
+        trigger_overlay(msg, 1100);
+        shown = left;
+    }
+}
+
+// Hold B0 and tap a green key to recall that song memory; keep the key
+// held to save into it instead. These keys never reach the mode.
+static int8_t memory_key = -1;
+static uint64_t memory_key_time = 0;
+static bool memory_saved = false;
+
+static bool memory_key_down(int key, uint64_t now)
+{
+    if (memory_key >= 0) return true;   // a second key during one is ignored
+    if (tc_control_states[0] || tc_app_get_mode() == TOUCHORD_SETTINGS) return false;
+    tc_button_slid[0] = true;           // B0's tap and Settings hold are spent
+    memory_key = (int8_t)key;
+    memory_key_time = now;
+    memory_saved = false;
+    trigger_overlay("Hold to save", MEMORY_SAVE_HOLD_MS);
+    return true;
+}
+
+static bool memory_key_up(int key)
+{
+    if (memory_key < 0) return false;
+    if (key != memory_key) return true;
+    if (!memory_saved) memory_recall((uint8_t)key);
+    memory_key = -1;
+    return true;
+}
+
+static void memory_key_poll(uint64_t now)
+{
+    if (memory_key < 0 || memory_saved) return;
+    if (now - memory_key_time >= MEMORY_SAVE_HOLD_MS) {
+        memory_store((uint8_t)memory_key);
+        memory_saved = true;
+    }
+}
+
 void poll_buttons()
 {
     uint64_t now = to_ms_since_boot(get_absolute_time());
-    if (now - tc_time_last_control > DEFAULT_DOUBLE_CLICK_MS)
-        flush_pending_click();
 
     for (int i = 0; i < NUM_CONTROLS; i++) {
-        bool curr_state = gpio_get(i + CONTROL_0);
+        bool curr_state = gpio_get(CONTROL_PIN(i));
         if (i == 0) {
             poll_b0(curr_state, now);
         } else if (tc_control_states[i] && !curr_state) {
-            // Another button settles a pending click first, so it is neither
-            // lost nor replayed as this button.
-            if (tc_control_double_click[i]) {
-                if (tc_last_control_clicks > 0 && tc_last_control == i
-                    && now - tc_time_last_control < DEFAULT_DOUBLE_CLICK_MS) {
-                    tc_last_control_clicks++;
-                } else {
-                    flush_pending_click();
-                    tc_time_last_control = now;
-                    tc_last_control_clicks = 1;
-                    tc_last_control = i;
-                }
-            } else {
-                flush_pending_click();
-                tc_button_down(i);
-            }
+            tc_button_slid[i] = false;
+            // B1 and B2 also hold and slide, so their tap fires on release.
+            if (i > 2) tc_button_down(i);
         } else if (!tc_control_states[i] && curr_state) {
+            if (i <= 2 && !tc_button_slid[i]) tc_button_down(i);
             tc_button_up(i);
         }
         tc_control_states[i] = curr_state;
     }
 
-    //B0 + B2 + B4: drop into BOOTSEL.
-    if (!tc_control_states[0] && !tc_control_states[2] && !tc_control_states[4])
-        tc_trigger_bootsel = true;
+    poll_bootsel_combo(now);
 
     for (int i = 0; i < NUM_KEYS; i++) {
         bool curr_state = gpio_get(i + KEY_0);
         if (tc_key_states[i] && !curr_state) {
-            tc_last_key = i;
-            quant_key_down(i);
+            if (!memory_key_down(i, now)) {
+                tc_last_key = i;
+                quant_key_down(i);
+            }
         } else if (!tc_key_states[i] && curr_state) {
-            quant_key_up(i);
+            if (!memory_key_up(i))
+                quant_key_up(i);
         }
         tc_key_states[i] = curr_state;
     }
+    memory_key_poll(now);
 }
 
 void poll_trill_bar(TrillBar* bar)
@@ -201,6 +255,8 @@ void init_i2c()
 
 TouchordMode prevMode = TOUCHORD_COMPOSE;
 
+static void start_mode(TouchordMode mode);
+
 void select_mode(TouchordMode mode)
 {
     switch (prevMode) {
@@ -212,6 +268,11 @@ void select_mode(TouchordMode mode)
         case TOUCHORD_DRUM:     drum_end();     break;
         case TOUCHORD_SETTINGS: settings_end(); break;
     }
+    start_mode(mode);
+}
+
+static void start_mode(TouchordMode mode)
+{
     switch (mode) {
         case TOUCHORD_COMPOSE:  compose_start();  break;
         case TOUCHORD_ARP:      arp_start();      break;
@@ -254,6 +315,15 @@ void io_task()
         }
 
         TouchordMode currentMode = tc_app_get_mode();
+        if (tc_mode_restart) {
+            // A song memory swapped the setup: stop the old mode's notes and
+            // start the new one afresh, with a transition only if it changed.
+            tc_mode_restart = false;
+            if (currentMode == prevMode) {
+                select_mode(currentMode);
+                continue;
+            }
+        }
         if (currentMode != prevMode) {
             static uint8_t prev_fb[128 * 8];
             static uint8_t next_fb[128 * 8];
@@ -266,7 +336,7 @@ void io_task()
 
             int direction = (currentMode == TOUCHORD_SETTINGS || prevMode == TOUCHORD_SETTINGS)
                             ? 0
-                            : (currentMode > prevMode ? 1 : -1);
+                            : (tc_mode_position(currentMode) > tc_mode_position(prevMode) ? 1 : -1);
 
             anim_transition(prev_fb, next_fb, direction);
             prevMode = currentMode;
@@ -274,6 +344,13 @@ void io_task()
         }
 
         ssd1306_clear(&tc_disp);
+        if (!tc_connected) {
+            draw_connect_screen(tc_app.bluetooth);
+            draw_overlay();
+            ssd1306_show(&tc_disp);
+            sleep_ms(20);
+            continue;
+        }
         tc_draw();
         tc_update();
         draw_trill_indicator();
@@ -300,20 +377,20 @@ int main()
     init_GPIO();
     sleep_ms(500);
 
-    if (!gpio_get(CONTROL_0))
+    if (!gpio_get(CONTROL_PIN(0)))
         rom_reset_usb_boot(0, 0);
 
     tc_app = tc_app_default;
     tc_app_working = tc_app_default;
-    flash_load_preset(0, &tc_app);
-    use_single_key_slot(&tc_app);
-    // Always boot into Compose
-    tc_app.mode = TOUCHORD_COMPOSE;
+    memories_load_startup(&tc_app);
+    // Boot into the mode that was saved, but never into Settings
+    if (tc_app.mode >= TOUCHORD_SETTINGS) tc_app.mode = TOUCHORD_COMPOSE;
+    prevMode = tc_app.mode;
 
     tc_sync_init();
     sched_init();
     reload_custom_scales();
-    compose_start();
+    start_mode(tc_app.mode);
 
     midi_out_init();
     multicore_launch_core1(io_task);
@@ -333,13 +410,15 @@ int main()
         ble_midi_task();
         midi_clock_task();
 
-        if ((tud_midi_mounted() || ble_midi_is_connected())
-            && time_reached(next_button_poll)) {
-            tc_connected = true;
+        // Keys and buttons only play while something is listening; until
+        // then the screen asks for a connection.
+        tc_connected = tud_midi_mounted() || ble_midi_is_connected();
+        if (tc_connected && time_reached(next_button_poll)) {
             poll_buttons();
             next_button_poll = make_timeout_time_ms(BUTTON_POLL_MS);
         }
 
+        autosave_task();
         quant_task();
         arp_task();
         sched_task();

@@ -64,7 +64,7 @@ void strum_button_down(uint8_t button)
     switch (button) {
         case 0: tc_app_set_mode(TOUCHORD_OMNI); break;
         case 1:
-            if (tc_app.octave > 1) {
+            if (tc_app.octave > OCTAVE_MIN) {
                 critical_section_enter_blocking(&tc_app_lock);
                 tc_app.octave--;
                 rebuild_chord_for(tc_last_key);
@@ -72,7 +72,7 @@ void strum_button_down(uint8_t button)
             }
             break;
         case 2:
-            if (tc_app.octave < 7) {
+            if (tc_app.octave < OCTAVE_MAX) {
                 critical_section_enter_blocking(&tc_app_lock);
                 tc_app.octave++;
                 rebuild_chord_for(tc_last_key);
@@ -82,15 +82,6 @@ void strum_button_down(uint8_t button)
     }
 }
 
-void strum_button_double_down(uint8_t button)
-{
-    critical_section_enter_blocking(&tc_app_lock);
-    switch (button) {
-        case 1: if (tc_app.extension_count > 1) tc_app.extension_count--; break;
-        case 2: if (tc_app.extension_count < 5) tc_app.extension_count++; break;
-    }
-    critical_section_exit(&tc_app_lock);
-}
 
 void strum_button_up(uint8_t button) {}
 

@@ -12,7 +12,9 @@
 #include <stdbool.h>
 
 // Hold a button and slide on the bar:
-//   B5 sets the key, B4 picks the chord set, B3 sets the chord size.
+//   B5 sets the key, B4 picks the chord set, B3 sets the chord size,
+//   B0 picks a mode, B1 the mode's playing style, B2 the touch (velocity).
+// Holding B1 and B2 together shows what every button does.
 // Returns true while the bar is taken over, so the mode never sees the touch.
 bool key_gesture_poll(float pos, bool touching);
 

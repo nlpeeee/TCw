@@ -28,7 +28,8 @@ static int trill_jazz_seg = -1;
 static char tc_compose_tooltip[16] = {'\0'};
 
 static const char *jazz_label[4] = { "Tritone", "Sec.Dom", "Parallel", "Dim7" };
-static const char *deg_label[5]  = { "Ext 6", "Ext 5", "Ext 4", "Ext 4 Par", "Ext 3 Par" };
+// Flip swaps major and minor.
+static const char *deg_label[5]  = { "6 notes", "5 notes", "4 notes", "Flip 4", "Flip 3" };
 
 static int compose_segment_count(void)
 {
@@ -128,7 +129,7 @@ void compose_draw()
     if (tc_compose_tooltip[0]) {
         int adv = font_3x6[1] + font_3x6[2];
         int w   = (int)strlen(tc_compose_tooltip) * adv - font_3x6[2];
-        ssd1306_draw_string_with_font(&tc_disp, (128 - w) / 2, 42, 1,
+        ssd1306_draw_string_with_font(&tc_disp, (128 - w) / 2, 47, 1,
                                       font_3x6, tc_compose_tooltip);
     }
     draw_mode_label("Compose");
@@ -187,12 +188,11 @@ void compose_button_down(uint8_t button)
 {
     switch (button) {
         case 0: tc_app_set_mode(TOUCHORD_ARP); break;
-        case 1: if (tc_app.octave > 0) tc_app.octave--; break;
-        case 2: if (tc_app.octave < 7) tc_app.octave++; break;
+        case 1: if (tc_app.octave > OCTAVE_MIN) tc_app.octave--; break;
+        case 2: if (tc_app.octave < OCTAVE_MAX) tc_app.octave++; break;
     }
 }
 
-void compose_button_double_down(uint8_t button) {}
 void compose_button_up(uint8_t button) {}
 
 static int update_trill_state(float pos)

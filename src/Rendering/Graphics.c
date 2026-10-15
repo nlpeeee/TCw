@@ -16,20 +16,74 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Short form of a triad name for the 7-key row: "Bdim" -> "Bo", "Gsus4" -> "Gs4".
+static void short_chord_name(char *dst, size_t n, const char *name)
+{
+    static const char *const long_s[]  = { "dim", "sus4", "sus2", "aug" };
+    static const char *const short_s[] = { "o",   "s4",   "s2",   "+"   };
+    snprintf(dst, n, "%s", name);
+    for (int i = 0; i < 4; i++) {
+        char *at = strstr(dst, long_s[i]);
+        if (at) { snprintf(at, n - (size_t)(at - dst), "%s", short_s[i]); break; }
+    }
+}
+
+// Small-font text cut out of whatever is drawn under it.
+static void clear_small_string(int x, int y, const char *str)
+{
+    const uint8_t cols = font_3x6[1], first = font_3x6[3], last = font_3x6[4];
+    const int adv = font_3x6[1] + font_3x6[2];
+    for (int i = 0; str[i]; i++) {
+        char c = str[i];
+        if (c < first || c > last) continue;
+        const uint8_t *glyph = &font_3x6[5 + (c - first) * cols];
+        for (uint8_t col = 0; col < cols; col++) {
+            uint8_t line = glyph[col];
+            for (int j = 0; j < 8; j++, line >>= 1)
+                if (line & 1) ssd1306_clear_pixel(&tc_disp, x + i * adv + col, y + j);
+        }
+    }
+}
+
+// The chords the 7 green keys play, in a row lined up with them, with any
+// key being held shown inverted.
+void draw_chord_row(uint8_t y)
+{
+    const int x0 = 8, cell = (128 - x0) / NUM_KEYS;
+    const int adv = font_3x6[1] + font_3x6[2];
+    for (int k = 0; k < NUM_KEYS; k++) {
+        uint8_t notes[MAX_CHORD];
+        char name[CHORD_NAME_LEN], label[CHORD_NAME_LEN];
+        build_chord(tc_app.key[tc_app.current_key], tc_app.octave, k, CHORD_DEFAULT,
+                    3, 0, notes, name);
+        short_chord_name(label, sizeof label, name);
+        int w = (int)strlen(label) * adv - font_3x6[2];
+        int cx = x0 + k * cell;
+        int tx = cx + (cell - w) / 2;
+        if (!tc_key_states[k]) {
+            ssd1306_draw_square(&tc_disp, cx, y - 1, cell - 1, 8);
+            clear_small_string(tx, y, label);
+        } else {
+            ssd1306_draw_string_with_font(&tc_disp, tx, y, 1, font_3x6, label);
+        }
+    }
+}
+
 void draw_current_chord_ex(uint8_t octave_span)
 {
     uint8_t text_w = strlen(tc_app.chord_name) * 6 - 1;
-    ssd1306_draw_string(&tc_disp, 64 - text_w, 24, 2, tc_app.chord_name);
+    ssd1306_draw_string(&tc_disp, 64 - text_w, 17, 2, tc_app.chord_name);
+    draw_chord_row(37);
 
     const char *root  = root_names[tc_app.key[tc_app.current_key].root];
     const char *scale = key_scale_name(tc_app.key[tc_app.current_key]);
     uint8_t rl = strlen(root);
     uint8_t ql = strlen(scale);
-    uint8_t header_w = 8 + 2 + rl * 6 + 2 + ql * 6 - 1;
+    uint8_t header_w = 8 + 2 + rl * 6 + 5 + ql * 6 - 1;
     uint8_t hx = (128 - header_w) / 2;
     draw_icon_treble(hx, 0);
     ssd1306_draw_string(&tc_disp, hx + 10, 1, 1, root);
-    ssd1306_draw_string(&tc_disp, hx + 10 + rl * 6, 1, 1, scale);
+    ssd1306_draw_string(&tc_disp, hx + 15 + rl * 6, 1, 1, scale);
 
     if (octave_span == 0) octave_span = 1;
     if (tc_app.octave + octave_span > 8) octave_span = 8 - tc_app.octave;
@@ -225,6 +279,30 @@ void trigger_overlay(const char *msg, uint32_t ms)
     snprintf(tc_overlay_msg, sizeof tc_overlay_msg, "%s", msg ? msg : "");
     tc_overlay_start_ms = to_ms_since_boot(get_absolute_time());
     tc_overlay_dur_ms   = ms;
+}
+
+static void draw_centered(int y, const char *str)
+{
+    int w = (int)strlen(str) * 6 - 1;
+    ssd1306_draw_string(&tc_disp, (128 - w) / 2, y, 1, str);
+}
+
+void draw_connect_screen(bool bluetooth)
+{
+    const char *title = "Touchord";
+    ssd1306_draw_string(&tc_disp, (128 - 8 * 12) / 2, 2, 2, title);
+    ssd1306_draw_line(&tc_disp, 0, 20, 127, 20);
+    if (bluetooth) {
+        draw_centered(25, "Connect USB or");
+        draw_centered(35, "Bluetooth \"Touchord\"");
+    } else {
+        draw_centered(30, "Connect USB");
+    }
+    ssd1306_draw_line(&tc_disp, 0, 47, 127, 47);
+    const char *hint = "Keys play once connected";
+    int adv = font_3x6[1] + font_3x6[2];
+    int hw  = (int)strlen(hint) * adv - font_3x6[2];
+    ssd1306_draw_string_with_font(&tc_disp, (128 - hw) / 2, 53, 1, font_3x6, hint);
 }
 
 void draw_settings_footer(void)

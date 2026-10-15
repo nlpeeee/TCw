@@ -31,10 +31,12 @@ void arp_key_down(uint8_t key);
 void arp_key_up(uint8_t key);
 void arp_key_up_independent(uint8_t key);
 void arp_button_down(uint8_t button);
-void arp_button_double_down(uint8_t button);
 void arp_button_up(uint8_t button);
 void arp_trill_down(float pos, float size);
 void arp_trill_up();
+
+// True while the arp is stepping, latched or held.
+bool arp_is_playing(void);
 
 // Core 0 main loop: play the next step when it is due.
 void arp_task(void);

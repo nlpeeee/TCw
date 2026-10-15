@@ -25,6 +25,14 @@ static uint8_t pad_note[NUM_KEYS] = {
 };
 _Static_assert(NUM_KEYS == 7, "pad_note initialiser");
 
+const char* const drum_layout_names[DRUM_LAYOUT_COUNT] = { "Kit", "Notes" };
+
+// General MIDI drums on the keys, left to right.
+static const uint8_t kit_notes[NUM_KEYS] = { 36, 38, 39, 42, 46, 45, 49 };
+static const char* const kit_labels[NUM_KEYS] = { "Kik", "Snr", "Clp", "Hat", "Opn", "Tom", "Cym" };
+
+static bool kit(void) { return tc_app.drum_layout != DRUM_NOTES; }
+
 static const ModeHandlers drum_handlers = TC_MODE_HANDLERS(drum);
 
 void drum_start()
@@ -48,7 +56,7 @@ void drum_draw()
 {
     draw_mode_label("Drum");
     quant_draw_marker();
-    draw_octave_dots(128 - 32, 2, tc_app.octave, 1, 8);
+    if (!kit()) draw_octave_dots(128 - 32, 2, tc_app.octave, 1, 8);
 
     const int pad_w = 12, pad_h = 14, gap = 3;
     const int total_w = NUM_KEYS * pad_w + (NUM_KEYS - 1) * gap;
@@ -58,16 +66,18 @@ void drum_draw()
         int px = start_x + i * (pad_w + gap);
         if (!tc_key_states[i]) ssd1306_draw_square(&tc_disp, px, pad_y, pad_w, pad_h);
         else                   ssd1306_draw_empty_square(&tc_disp, px, pad_y, pad_w, pad_h);
+        if (kit())
+            ssd1306_draw_string_with_font(&tc_disp, px, pad_y + pad_h + 2, 1, font_3x6, kit_labels[i]);
     }
 
-    draw_string_int_centered("Velocity: ", drum_velocity, 36);
+    draw_string_int_centered("Velocity: ", drum_velocity, 40);
 }
 
 void drum_update() {}
 
 void drum_key_down(uint8_t key)
 {
-    uint8_t note = 12 * (tc_app.octave + 1) + key;
+    uint8_t note = kit() ? kit_notes[key] : 12 * (tc_app.octave + 1) + key;
     send_midi_note(tc_app.channel, NOTE_ON, note, drum_velocity);
     pad_note[key] = note;
 }
@@ -85,12 +95,12 @@ void drum_button_down(uint8_t button)
 {
     switch (button) {
         case 0: tc_app_set_mode(TOUCHORD_COMPOSE); break;   // hold B0 for Settings
-        case 1: if (tc_app.octave > 0) tc_app.octave--; break;
-        case 2: if (tc_app.octave < 7) tc_app.octave++; break;
+        // Octave only moves the notes layout; the kit's drums stay put.
+        case 1: if (!kit() && tc_app.octave > 0) tc_app.octave--; break;
+        case 2: if (!kit() && tc_app.octave < 7) tc_app.octave++; break;
     }
 }
 
-void drum_button_double_down(uint8_t button) {}
 void drum_button_up(uint8_t button) {}
 
 void drum_trill_down(float pos, float size)

@@ -216,7 +216,7 @@ void arp_draw()
     }
     int adv = font_3x6[1] + font_3x6[2];
     int w   = (int)strlen(info) * adv - font_3x6[2];
-    ssd1306_draw_string_with_font(&tc_disp, (128 - w) / 2, 42, 1, font_3x6, info);
+    ssd1306_draw_string_with_font(&tc_disp, (128 - w) / 2, 47, 1, font_3x6, info);
     draw_mode_label("Arp");
     quant_draw_marker();
 }
@@ -254,25 +254,16 @@ void arp_key_up_independent(uint8_t key) {}
 void arp_button_down(uint8_t button)
 {
     switch (button) {
-        case 0: tc_app_set_mode(TOUCHORD_PERFORM); break;
-        case 1: if (tc_app.octave > 0) tc_app.octave--; break;
-        case 2: if (tc_app.octave < 7) tc_app.octave++; break;
+        case 0: tc_app_set_mode(TOUCHORD_STRUM); break;
+        case 1: if (tc_app.octave > OCTAVE_MIN) tc_app.octave--; break;
+        case 2: if (tc_app.octave < OCTAVE_MAX) tc_app.octave++; break;
     }
 }
 
-void arp_button_double_down(uint8_t button)
-{
-    uint8_t p = clamp_setting(tc_app.arp_pattern, ARP_PATTERN_COUNT);
-    switch (button) {
-        case 1: p = (p + ARP_PATTERN_COUNT - 1) % ARP_PATTERN_COUNT; break;
-        case 2: p = (p + 1) % ARP_PATTERN_COUNT; break;
-        default: return;
-    }
-    tc_app.arp_pattern = p;
-    trigger_overlay(arp_pattern_names[p], 600);
-}
 
 void arp_button_up(uint8_t button) {}
+
+bool arp_is_playing(void) { return active; }
 
 void arp_trill_down(float pos, float size)
 {
@@ -287,8 +278,10 @@ void arp_trill_down(float pos, float size)
 
     critical_section_enter_blocking(&tc_app_lock);
     if (seg < ARP_RATE_COUNT) {
-        tc_app.arp_rate = seg;
-        snprintf(arp_tooltip, sizeof arp_tooltip, "Rate %s", arp_rate_names[seg]);
+        // The far end of the bar (position 0) is the fastest rate.
+        int rate = ARP_RATE_COUNT - 1 - seg;
+        tc_app.arp_rate = rate;
+        snprintf(arp_tooltip, sizeof arp_tooltip, "Rate %s", arp_rate_names[rate]);
     } else {
         tc_app.arp_octaves = (clamp_setting(tc_app.arp_octaves, ARP_OCTAVES_MAX) + 1) % ARP_OCTAVES_MAX;
         snprintf(arp_tooltip, sizeof arp_tooltip, "Range %s", arp_octave_names[tc_app.arp_octaves]);

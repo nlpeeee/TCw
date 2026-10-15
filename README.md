@@ -19,14 +19,20 @@ TCw tracks [dovker/Touchord](https://github.com/dovker/Touchord) (currently v1.0
   - **Settings > MIDI > Bluetooth** turns Bluetooth MIDI on or off. The LED blinks slowly while USB or Bluetooth is connected.
   - "BT Connected" / "BT Disconnected" pops up on screen when a host connects or drops.
 - **Arp mode** (B0 from Compose). Hold a key and its chord plays one note at a time.
-  - Touch bar, left to right in 8 parts: six rates (1/4, 1/8, 1/8T, 1/16, 1/16T, 1/32), then the last two parts together: each tap steps the range through 1-4 octaves.
+  - Touch bar in 8 parts: six rates, fastest (1/32) at the far end down to 1/4, then the two parts nearest you together: each tap steps the range through 1-4 octaves.
   - Latch is on by default: the arp keeps going after you let go, another key changes chord, and the same key again stops it. Turn it off under Settings > Modes > Arp.
-  - Double-click B1/B2 steps the pattern: Up, Down, Up-Down, Random, Chord.
+  - Hold B1 and slide to pick the pattern: Up, Down, Up-Down, Random, Chord.
   - Pattern, rate, range, gate, tempo and latch are also under **Settings > Modes > Arp**.
 - **MIDI clock in** over USB or Bluetooth. The arp locks to the host's beat while it plays and uses its tempo while it is stopped; with no clock it uses the Arp Tempo setting. **Settings > MIDI > Clock In** shows the incoming tempo.
 - **Bass channel** (**Settings > MIDI > Bass**, Off by default). Compose and Arp send the chord root an octave down on that channel; Omni sends its root and fifth there.
 - **Pitch bend and pressure from the touch bar** in Perform: set **Settings > Modes > Perform > Pos Sends** or **Size Sends** to **Bend** or **Press** instead of CC. Bend follows your finger from wherever it lands (half the bar is a full bend); Press sends channel pressure from how firmly you press. Both return to rest when you lift.
 - **Compose Roll** (**Settings > Modes > Compose > Roll**) plays chords from the lowest note up, 10 to 80 ms apart.
+- **One rule for every white button: tap, or hold and slide on the bar.** Tap B0 for the next mode, B1/B2 for octave down/up (no more double-clicks, so taps don't wait). Hold one and slide to choose: **B0** a mode (it switches when you let go), **B1** the mode's playing style (Compose roll, Arp pattern, Perform's bar output, Strum and Omni span), **B2** touch (velocity, soft near you to hard at the far end), **B3** size, **B4** chord set, **B5** key. Hold **B1 + B2** together for a help screen. On the bar the far end is always more: higher, faster, brighter, harder.
+- **The 7 chords on screen.** Every chord mode shows a row of the 7 chords the green keys play, lined up with the keys, with the one you hold lit. Compose's bar labels say what they do: 6, 5 or 4 notes, or Flip (major and minor swapped).
+- **It remembers.** The setup you are playing is saved by itself a few seconds after you stop changing it (only while nothing is playing), in its own flash sector, and comes back at power-on, mode included.
+- **Song memories on the green keys.** Hold B0 and tap a green key to switch to memory 1-7; keep the key held for 2 seconds to save the current setup there instead. Memories are preset slots 1-7, and MIDI and Bluetooth settings stay as they are when you switch. Out of the box each one holds a starter setup: 1 Compose · Bright 1, 2 Compose · Warm 3 rolled 9ths, 3 Arp · Dark 2, 4 Strum · Bright 2, 5 Omni · Warm 2, 6 Arp · Warm 1 up-down, 7 Perform · Dark 3 with bend.
+- **Sounds good by default.** Compose voice leading is on, chords stay in one register whatever the key (roots from F# below middle C up to F), chord modes keep to octaves 2-6, and B0 steps through Compose, Arp, Strum, Omni, Perform, Drum. Drum mode plays a General MIDI kit (kick, snare, clap, closed and open hat, tom, crash); hold B1 and slide to switch it to notes in a row, where B1/B2 change octave as before.
+- **Safer first run.** Until USB or Bluetooth connects, the screen says so instead of sitting on a silent play screen. Firmware mode (B0 + B2 + B4) needs a 3 second hold, and **Reset Factory** and **Firmware Update** ask for a second OK press. Preset slots are numbered from 1.
 
 ## Building
 
@@ -34,10 +40,10 @@ Same as upstream (Pico SDK 2.2.0, VS Code Pico extension or plain CMake). Two fi
 
 | File | Wiring |
 | --- | --- |
-| `Touchord-single.uf2` | Trill bar and screen share I2C0 on GPIO16/17. **This is the TCw prototype wiring.** |
+| `Touchord-single.uf2` | Trill bar and screen share I2C0 on GPIO16/17, and the white buttons run B0 = GPIO6 to B5 = GPIO1 so B0 is on the left. **This is the TCw prototype wiring.** |
 | `Touchord-dual.uf2` | Trill bar on I2C0 (GPIO16/17), screen on I2C1 (GPIO14/15), as on the Touchord PCB. |
 
-Hold the first control button while plugging in, or press buttons 1 + 3 + 5 together, to get into BOOTSEL, then copy the `.uf2` across.
+Hold B0 (the leftmost white button) while plugging in, or hold buttons 1 + 3 + 5 together for 3 seconds (the screen counts down), to get into BOOTSEL, then copy the `.uf2` across.
 
 To build for a plain Pico 2 without Bluetooth: `cmake -DPICO_BOARD=pico2 ...`.
 

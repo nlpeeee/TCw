@@ -34,7 +34,6 @@ extern void (*tc_key_down)(uint8_t);
 extern void (*tc_key_up)(uint8_t);
 extern void (*tc_key_up_independent)(uint8_t);
 extern void (*tc_button_down)(uint8_t);
-extern void (*tc_button_double_down)(uint8_t);
 extern void (*tc_button_up)(uint8_t);
 extern void (*tc_trill_down)(float, float);
 extern void (*tc_trill_up)();
@@ -47,7 +46,6 @@ typedef struct {
     void (*key_up)(uint8_t);
     void (*key_up_independent)(uint8_t);
     void (*button_down)(uint8_t);
-    void (*button_double_down)(uint8_t);
     void (*button_up)(uint8_t);
     void (*trill_down)(float, float);
     void (*trill_up)(void);
@@ -60,7 +58,6 @@ typedef struct {
     .key_up             = prefix##_key_up,                  \
     .key_up_independent = prefix##_key_up_independent,      \
     .button_down        = prefix##_button_down,             \
-    .button_double_down = prefix##_button_double_down,      \
     .button_up          = prefix##_button_up,               \
     .trill_down         = prefix##_trill_down,              \
     .trill_up           = prefix##_trill_up,                \
@@ -72,19 +69,26 @@ extern bool tc_running;
 extern volatile bool tc_trigger_bootsel;
 // Set by core 0 once USB MIDI or Bluetooth is up and the buttons are read.
 extern volatile bool tc_connected;
+// Set when the whole setup was swapped (a song memory), so core 1 restarts
+// the mode even if it is the same one.
+extern volatile bool tc_mode_restart;
+// Names of the play modes, by TouchordMode.
+extern const char* const tc_mode_names[6];
+// The play modes in the order a B0 tap steps through them.
+extern const TouchordMode tc_mode_order[6];
+int tc_mode_position(TouchordMode mode);
 
 extern TrillBar tc_bar;
 extern ssd1306_t tc_disp;
 
 extern bool tc_key_states[NUM_KEYS];
 extern bool tc_control_states[NUM_CONTROLS];
-extern bool tc_control_double_click[NUM_CONTROLS];
 extern bool tc_touch_state;
+// Set by core 1 when a held white button was used with the bar (or B1 + B2
+// together), so core 0 skips that button's tap on release.
+extern volatile bool tc_button_slid[NUM_CONTROLS];
 
-extern uint64_t tc_time_last_control;
-extern uint8_t tc_last_control_clicks;
 extern uint8_t tc_last_key;
-extern uint8_t tc_last_control;
 
 extern float   tc_trill_pos;
 extern float   tc_trill_strength;   // summed pad strength of the current touch

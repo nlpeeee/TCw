@@ -24,7 +24,6 @@ void compose_key_down(uint8_t key);
 void compose_key_up(uint8_t key);
 void compose_key_up_independent(uint8_t key);
 void compose_button_down(uint8_t button);
-void compose_button_double_down(uint8_t button);
 void compose_button_up(uint8_t button);
 void compose_trill_down(float pos, float size);
 void compose_trill_up();

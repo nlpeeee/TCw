@@ -14,7 +14,27 @@ when cutting a release.
 
 ### Added
 
+- A "Connect USB or Bluetooth" screen until a host connects.
+- Reset Factory and Firmware Update ask for a second OK press.
+- The setup is saved automatically and restored at power-on, including the mode (Touchord used to always start in Compose).
+- Song memories: hold B0 + a green key to recall memory 1-7, keep the key held 2 s to save. Empty memories hold 7 starter setups.
+- A row of the 7 keys' chords on the play screen, with the held key lit.
+- Hold B0 and slide to pick a mode, B1 for the mode's playing style, B2 for velocity; hold B1 + B2 for a help screen.
+
 ### Changed
+
+- B0 + B2 + B4 must be held for 3 seconds, with a countdown, to enter BOOTSEL.
+- Preset slots are shown numbered from 1.
+- B1/B2 no longer double-click: a tap changes octave on release, without the 300 ms wait. Arp pattern, Strum size and Omni span moved to hold-and-slide (B1, B3, B1).
+- Compose's bar labels read "6 notes", "5 notes", "4 notes", "Flip 4", "Flip 3" instead of "Ext 6" ... "Ext 3 Par".
+- Compose voice leading is on by default.
+- Chord roots stay between F# below and F above the octave's C, so a key change doesn't jump most of an octave.
+- Chord modes keep to octaves 2-6.
+- B0 steps through Compose, Arp, Strum, Omni, Perform, Drum.
+- Drum mode defaults to a General MIDI kit; hold B1 and slide for the old notes-in-a-row layout.
+- Arp's bar rates run fastest at the far end, like every other bar control.
+- Perform's "Pos Keep" / "Size Keep" are renamed "Pos Resets" / "Size Resets", which is what they do.
+- `Touchord-single.uf2` (TCw wiring) reads the white buttons in reverse pin order, so B0 is the leftmost button on the TCw as on the Touchord.
 
 ### Fixed
 

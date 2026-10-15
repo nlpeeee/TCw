@@ -50,7 +50,7 @@ const TouchordSettings tc_app_default = {
 
     .compose_type       = COMPOSE_DEGREE,
     .compose_sustain    = false,
-    .compose_voice_lead = false,
+    .compose_voice_lead = true,
 
     .perform_pos_cc              = MIDI_CUTOFF,
     .perform_size_cc             = MIDI_MOD,
@@ -78,6 +78,8 @@ const TouchordSettings tc_app_default = {
 
     .chord_set                   = CHORD_SET_DEFAULT,
 
+    .drum_layout                 = DRUM_KIT,
+
     .quantize                    = 0,   // off
 };
 
@@ -90,7 +92,6 @@ void (*tc_key_down)(uint8_t) = NULL;
 void (*tc_key_up)(uint8_t) = NULL;
 void (*tc_key_up_independent)(uint8_t) = NULL;
 void (*tc_button_down)(uint8_t) = NULL;
-void (*tc_button_double_down)(uint8_t) = NULL;
 void (*tc_button_up)(uint8_t) = NULL;
 void (*tc_trill_down)(float, float) = NULL;
 void (*tc_trill_up)() = NULL;
@@ -103,7 +104,6 @@ void tc_bind_handlers(const ModeHandlers *h)
     tc_key_up             = h->key_up;
     tc_key_up_independent = h->key_up_independent;
     tc_button_down        = h->button_down;
-    tc_button_double_down = h->button_double_down;
     tc_button_up          = h->button_up;
     tc_trill_down         = h->trill_down;
     tc_trill_up           = h->trill_up;
@@ -113,19 +113,28 @@ TouchordMode tc_prev_mode = TOUCHORD_COMPOSE;
 bool tc_running = true;
 volatile bool tc_trigger_bootsel = false;
 volatile bool tc_connected = false;
+volatile bool tc_mode_restart = false;
+const char* const tc_mode_names[6] = { "Compose", "Arp", "Perform", "Strum", "Omni", "Drum" };
+const TouchordMode tc_mode_order[6] = {
+    TOUCHORD_COMPOSE, TOUCHORD_ARP, TOUCHORD_STRUM, TOUCHORD_OMNI, TOUCHORD_PERFORM, TOUCHORD_DRUM,
+};
+
+int tc_mode_position(TouchordMode mode)
+{
+    for (int i = 0; i < 6; i++)
+        if (tc_mode_order[i] == mode) return i;
+    return 6;   // Settings, after the play modes
+}
 
 TrillBar tc_bar;
 ssd1306_t tc_disp;
 
 bool tc_key_states[NUM_KEYS];
 bool tc_control_states[NUM_CONTROLS];
-bool tc_control_double_click[NUM_CONTROLS] = {false, true, true, false, false, false};
 bool tc_touch_state = false;
+volatile bool tc_button_slid[NUM_CONTROLS];
 
-uint64_t tc_time_last_control = 0;
-uint8_t tc_last_control_clicks = 0;
 uint8_t tc_last_key = 0;
-uint8_t tc_last_control = 0;
 
 float   tc_trill_pos = 0.0f;
 float   tc_trill_strength = 0.0f;
