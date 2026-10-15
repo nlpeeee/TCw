@@ -110,6 +110,7 @@ TouchordMode tc_prev_mode = TOUCHORD_COMPOSE;
 
 bool tc_running = true;
 volatile bool tc_trigger_bootsel = false;
+volatile bool tc_connected = false;
 
 TrillBar tc_bar;
 ssd1306_t tc_disp;
@@ -132,3 +133,8 @@ bool    tc_trill_show = true;
 char     tc_overlay_msg[24]   = {'\0'};
 uint32_t tc_overlay_start_ms  = 0;
 uint32_t tc_overlay_dur_ms    = 0;
+void use_single_key_slot(TouchordSettings* s)
+{
+    if (s->current_key < 3) s->key[0] = s->key[s->current_key];
+    s->current_key = 0;
+}

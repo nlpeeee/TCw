@@ -18,6 +18,7 @@
 #include "font.h"
 #include <stdio.h>
 #include <string.h>
+#include "pico/time.h"
 
 typedef enum { GESTURE_NONE = 0, GESTURE_SIZE, GESTURE_CHORDS, GESTURE_KEY } Gesture;
 
@@ -271,5 +272,31 @@ void key_gesture_draw(void)
         draw_small_centered(55, buf);
     } else if (g != GESTURE_SIZE) {
         draw_small_centered(55, "Slide to change");
+    }
+}
+
+#define HINT_MS 3000
+
+void key_gesture_draw_hint(void)
+{
+    static uint32_t start_ms = 0;
+    static bool done = false;
+    if (done || !tc_connected) return;
+
+    uint32_t now = to_ms_since_boot(get_absolute_time());
+    if (start_ms == 0) start_ms = now ? now : 1;
+    // Gone once its time is up or the player holds one of the buttons.
+    if (now - start_ms >= HINT_MS || held_gesture() != GESTURE_NONE) {
+        done = true;
+        return;
+    }
+
+    static const char* const lines[3] = { "Hold + slide:", "B5 Key  B4 Chords", "B3 Size" };
+    const int box_x = 8, box_y = 12, box_w = 112, box_h = 38;
+    ssd1306_clear_square(&tc_disp, box_x - 1, box_y - 1, box_w + 2, box_h + 2);
+    ssd1306_draw_empty_square(&tc_disp, box_x, box_y, box_w, box_h);
+    for (int i = 0; i < 3; i++) {
+        int w = (int)strlen(lines[i]) * 6 - 1;
+        ssd1306_draw_string(&tc_disp, (128 - w) / 2, box_y + 5 + i * 10, 1, lines[i]);
     }
 }

@@ -278,6 +278,7 @@ void io_task()
         tc_update();
         draw_trill_indicator();
         key_gesture_draw();
+        key_gesture_draw_hint();
         draw_overlay();
 
 #if TOUCHORD_DUAL_I2C
@@ -305,6 +306,7 @@ int main()
     tc_app = tc_app_default;
     tc_app_working = tc_app_default;
     flash_load_preset(0, &tc_app);
+    use_single_key_slot(&tc_app);
     // Always boot into Compose
     tc_app.mode = TOUCHORD_COMPOSE;
 
@@ -333,6 +335,7 @@ int main()
 
         if ((tud_midi_mounted() || ble_midi_is_connected())
             && time_reached(next_button_poll)) {
+            tc_connected = true;
             poll_buttons();
             next_button_poll = make_timeout_time_ms(BUTTON_POLL_MS);
         }

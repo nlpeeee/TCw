@@ -19,4 +19,7 @@ bool key_gesture_poll(float pos, bool touching);
 // Draws the panel for the held button over the mode's screen.
 void key_gesture_draw(void);
 
+// Shows how to use the held buttons for a few seconds once the device connects.
+void key_gesture_draw_hint(void);
+
 #endif
