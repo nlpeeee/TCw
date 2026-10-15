@@ -45,6 +45,8 @@ void draw_trill_indicator(void);
 
 // Centered notification overlay (preset loads, factory reset, etc.).
 void trigger_overlay(const char *msg, uint32_t ms);
+// The 7 keys' chords in a row, lined up with the keys.
+void draw_chord_row(uint8_t y);
 // Shown until USB or Bluetooth connects, since keys don't play before that.
 void draw_connect_screen(bool bluetooth);
 void draw_overlay(void);
