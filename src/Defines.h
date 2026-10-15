@@ -80,6 +80,9 @@
 #define MAX_CHORD 6
 #define CHORD_NAME_LEN 16
 #define DEFAULT_OCTAVE 4
+// Chord modes stay out of the rumble and the squeak.
+#define OCTAVE_MIN 2
+#define OCTAVE_MAX 6
 #define DEFAULT_EXTENSIONS 4
 #define DEFAULT_VELOCITY 100
 #define DEFAULT_INVERSION 0

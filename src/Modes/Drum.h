@@ -12,6 +12,9 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "Defines.h"
+#include "Types.h"
+
+extern const char* const drum_layout_names[DRUM_LAYOUT_COUNT];
 
 void drum_start();
 void drum_end();

@@ -151,6 +151,16 @@ uint8_t note_to_midi(Note note, int octave, bool* flat) {
     return values[note] + 12 * (octave + 1);
 }
 
+// The key's root as a MIDI note, kept between F# below the octave's C and
+// the F above it, so changing key moves the chords a little, not most of
+// an octave.
+static uint8_t key_root_midi(Note note, int octave, bool* flat)
+{
+    uint8_t root = note_to_midi(note, octave, flat);
+    if (root % 12 >= 6 && root >= 12) root -= 12;
+    return root;
+}
+
 const char* get_note_name(int midi, bool flat) {
     return flat ? flat_names[midi % 12] : sharp_names[midi % 12];
 }
@@ -221,7 +231,7 @@ void build_chord(
         midi_out[i] = 0;
     }
     bool is_flat;
-    uint8_t root = note_to_midi(key.root, octave, &is_flat);
+    uint8_t root = key_root_midi(key.root, octave, &is_flat);
     if(key.quality == SCALE_CHORD_SET)
     {
         // Settings can change the set without a reload, so read it fresh.
@@ -324,7 +334,7 @@ void build_jazz_chord(Scale key, int octave, int degree, int sub_seg,
                       int extensions, uint8_t *out, char *name)
 {
     bool is_flat;
-    int natural_root = note_to_midi(key.root, octave, &is_flat);
+    int natural_root = key_root_midi(key.root, octave, &is_flat);
     if (key.quality == SCALE_CHORD_SET) load_chord_set();
     if      (key.quality == SCALE_MAJOR) natural_root += scale_intervals[SCALE_MAJOR][degree];
     else if (key.quality == SCALE_MINOR) natural_root += scale_intervals[SCALE_MINOR][degree];
