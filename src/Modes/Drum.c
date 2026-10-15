@@ -8,6 +8,7 @@
 
 #include "Drum.h"
 #include "Globals.h"
+#include "Timing/Quantize.h"
 #include "Sync.h"
 #include "IO/Midi.h"
 #include "Rendering/Graphics.h"
@@ -46,6 +47,7 @@ void drum_end()
 void drum_draw()
 {
     draw_mode_label("Drum");
+    quant_draw_marker();
     draw_octave_dots(128 - 32, 2, tc_app.octave, 1, 8);
 
     const int pad_w = 12, pad_h = 14, gap = 3;

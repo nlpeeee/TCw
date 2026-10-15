@@ -8,6 +8,7 @@
 
 #include "Compose.h"
 #include "Globals.h"
+#include "Timing/Quantize.h"
 #include "Helper.h"
 #include "Sync.h"
 #include "IO/Midi.h"
@@ -131,6 +132,7 @@ void compose_draw()
                                       font_3x6, tc_compose_tooltip);
     }
     draw_mode_label("Compose");
+    quant_draw_marker();
 }
 
 void compose_update() {}

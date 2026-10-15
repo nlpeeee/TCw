@@ -77,6 +77,8 @@ const TouchordSettings tc_app_default = {
     .perform_size_type           = PERFORM_CC,
 
     .chord_set                   = CHORD_SET_DEFAULT,
+
+    .quantize                    = 0,   // off
 };
 
 TouchordSettings tc_app;

@@ -176,6 +176,8 @@ typedef struct
     uint8_t perform_size_type;  // PerformTarget: what Perform's Size axis sends
 
     uint8_t chord_set;          // index into chord_sets[] in Notes/ChordSets.c
+
+    uint8_t quantize;           // index into quant_grid_names[] in Timing/Quantize.c, 0 = off
 } TouchordSettings;
 
 typedef enum

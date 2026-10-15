@@ -57,7 +57,7 @@ set(TOUCHORD_SOURCES
     src/Rendering/Graphics.c src/Rendering/ScreenDma.c
     src/IO/Midi.c src/IO/Trill.c
     src/Data/Flash.c
-    src/Timing/Scheduler.c src/Timing/MidiClock.c
+    src/Timing/Scheduler.c src/Timing/MidiClock.c src/Timing/Quantize.c
     src/thirdparty/Fonts.c src/thirdparty/ssd1306.c
 )
 
