@@ -9,9 +9,15 @@ It's just a prototype. Thanks
 
 ![Internal](https://github.com/nlpeeee/TCw/blob/main/img/internal.jpeg)
 
+## How to play
+
+New to Touchord? Read the **[manual](docs/MANUAL.md)**, or keep the cheat sheet below to hand. Its HTML source is [docs/cheat-sheet.html](docs/cheat-sheet.html).
+
+[![Touchord cheat sheet](docs/cheat-sheet.png)](docs/cheat-sheet.png)
+
 ## Changes over upstream Touchord
 
-TCw tracks [dovker/Touchord](https://github.com/dovker/Touchord) (currently v1.0.0). Everything below is new in TCw, most important first. [CHANGELOG.md](CHANGELOG.md) has the line-by-line list.
+TCw tracks [dovker/Touchord](https://github.com/dovker/Touchord) (currently v1.0.0). Everything below is new in TCw, most important first. [CHANGELOG.md](CHANGELOG.md) has the line-by-line list, and the [manual](docs/MANUAL.md) explains how to use each feature.
 
 ### Major features
 
