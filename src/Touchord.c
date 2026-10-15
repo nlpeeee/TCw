@@ -120,7 +120,7 @@ void poll_buttons()
         flush_pending_click();
 
     for (int i = 0; i < NUM_CONTROLS; i++) {
-        bool curr_state = gpio_get(i + CONTROL_0);
+        bool curr_state = gpio_get(CONTROL_PIN(i));
         if (i == 0) {
             poll_b0(curr_state, now);
         } else if (tc_control_states[i] && !curr_state) {
@@ -338,7 +338,7 @@ int main()
     init_GPIO();
     sleep_ms(500);
 
-    if (!gpio_get(CONTROL_0))
+    if (!gpio_get(CONTROL_PIN(0)))
         rom_reset_usb_boot(0, 0);
 
     tc_app = tc_app_default;

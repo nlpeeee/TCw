@@ -22,6 +22,7 @@ when cutting a release.
 - B0 + B2 + B4 must be held for 3 seconds, with a countdown, to enter BOOTSEL.
 - Preset slots are shown numbered from 1.
 - Perform's "Pos Keep" / "Size Keep" are renamed "Pos Resets" / "Size Resets", which is what they do.
+- `Touchord-single.uf2` (TCw wiring) reads the white buttons in reverse pin order, so B0 is the leftmost button on the TCw as on the Touchord.
 
 ### Fixed
 

@@ -35,10 +35,10 @@ Same as upstream (Pico SDK 2.2.0, VS Code Pico extension or plain CMake). Two fi
 
 | File | Wiring |
 | --- | --- |
-| `Touchord-single.uf2` | Trill bar and screen share I2C0 on GPIO16/17. **This is the TCw prototype wiring.** |
+| `Touchord-single.uf2` | Trill bar and screen share I2C0 on GPIO16/17, and the white buttons run B0 = GPIO6 to B5 = GPIO1 so B0 is on the left. **This is the TCw prototype wiring.** |
 | `Touchord-dual.uf2` | Trill bar on I2C0 (GPIO16/17), screen on I2C1 (GPIO14/15), as on the Touchord PCB. |
 
-Hold the first control button while plugging in, or hold buttons 1 + 3 + 5 together for 3 seconds (the screen counts down), to get into BOOTSEL, then copy the `.uf2` across.
+Hold B0 (the leftmost white button) while plugging in, or hold buttons 1 + 3 + 5 together for 3 seconds (the screen counts down), to get into BOOTSEL, then copy the `.uf2` across.
 
 To build for a plain Pico 2 without Bluetooth: `cmake -DPICO_BOARD=pico2 ...`.
 
