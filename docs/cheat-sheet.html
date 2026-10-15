@@ -1,0 +1,285 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Touchord Cheat Sheet</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: a front-panel diagram up top, then one card per white button, read like silkscreen labels on the device. */
+:root {
+  --bg: #eef0ec;
+  --panel: #fbfcfa;
+  --ink: #1d221f;
+  --muted: #5d665f;
+  --line: #cfd5cf;
+  --green: #2f8a57;
+  --green-ink: #ffffff;
+  --white-btn: #ffffff;
+  --white-edge: #9aa39c;
+  --bar: #d58a1f;
+  --bar-soft: #f6e2c2;
+  --chip: #e3e8e2;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --body: "Atkinson Hyperlegible", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #151916; --panel: #1e2420; --ink: #e8ece8; --muted: #9da79f; --line: #343d37;
+    --green: #3fa56b; --green-ink: #0d1510; --white-btn: #e9ece9; --white-edge: #6c766f;
+    --bar: #f0a53a; --bar-soft: #3a2e1c; --chip: #2a312c; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #151916; --panel: #1e2420; --ink: #e8ece8; --muted: #9da79f; --line: #343d37;
+  --green: #3fa56b; --green-ink: #0d1510; --white-btn: #e9ece9; --white-edge: #6c766f;
+  --bar: #f0a53a; --bar-soft: #3a2e1c; --chip: #2a312c; color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 28px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: .01em; margin: 0; text-wrap: balance; }
+h1 { font-size: 44px; line-height: 1; }
+h2 { font-size: 26px; text-transform: uppercase; letter-spacing: .04em; }
+h3 { font-size: 22px; }
+p { margin: 0; }
+.lead { color: var(--muted); max-width: 62ch; margin-top: 8px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; min-width: 0; }
+.sec { display: grid; gap: 14px; }
+.sec > p { color: var(--muted); max-width: 70ch; }
+.mono { font-family: var(--mono); font-size: 13px; }
+.kbd { display: inline-block; font-family: var(--display); font-weight: 700; font-size: 15px; padding: 0 7px; border-radius: 4px; border: 1.5px solid var(--white-edge); background: var(--white-btn); color: #1d221f; line-height: 1.35; }
+.kbd.g { background: var(--green); border-color: var(--green); color: var(--green-ink); }
+
+/* diagram */
+.diagram { overflow-x: auto; }
+.diagram svg { display: block; width: 100%; min-width: 640px; height: auto; }
+.diagram text { font-family: var(--display); }
+.diagram text.m { font-family: var(--mono); }
+
+/* rule banner */
+.rule { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.rule .panel { display: grid; gap: 6px; }
+.rule .big { font-family: var(--display); font-size: 30px; font-weight: 700; line-height: 1; }
+.rule .big span { color: var(--bar); }
+
+/* button cards */
+.buttons { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.btn-card { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; }
+.btn-card header { display: flex; align-items: center; gap: 10px; grid-column: 1 / -1; }
+.btn-card .cap { width: 42px; height: 34px; border-radius: 6px; border: 2px solid var(--white-edge); background: var(--white-btn); color: #1d221f; font-family: var(--display); font-weight: 700; font-size: 20px; display: grid; place-items: center; flex: none; }
+.btn-card dl { margin: 0; display: grid; gap: 8px; min-width: 0; }
+.btn-card dt { font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 13px; color: var(--muted); }
+.btn-card dd { margin: 0; }
+.btn-card dd.none { color: var(--muted); }
+.zones { display: grid; gap: 2px; width: 104px; }
+.zones .lab { font-family: var(--display); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--bar); font-weight: 700; }
+.zones ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; border-left: 4px solid var(--bar); padding-left: 6px; }
+.zones li { font-family: var(--mono); font-size: 12px; background: var(--bar-soft); border-radius: 3px; padding: 1px 6px; white-space: nowrap; }
+.zones li.on { background: var(--bar); color: #1d221f; font-weight: 700; }
+.zones.dense li { font-size: 11px; padding: 0 6px; }
+
+/* combos */
+.combos { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.combo { display: grid; gap: 8px; align-content: start; }
+.combo .keys { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; font-family: var(--display); font-size: 15px; color: var(--muted); }
+
+/* modes */
+.tablebox { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 640px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { font-family: var(--display); text-transform: uppercase; letter-spacing: .06em; font-size: 14px; color: var(--muted); font-weight: 600; }
+td:first-child { font-family: var(--display); font-weight: 700; font-size: 19px; white-space: nowrap; }
+td .step { font-family: var(--mono); font-size: 12px; color: var(--muted); display: block; font-weight: 500; }
+tr:last-child td { border-bottom: 0; }
+
+/* memories */
+.mem { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.mem div { background: var(--green); color: var(--green-ink); border-radius: 8px; padding: 10px 8px; display: grid; gap: 2px; min-width: 0; }
+.mem b { font-family: var(--display); font-size: 24px; line-height: 1; }
+.mem span { font-size: 13px; line-height: 1.25; overflow-wrap: anywhere; }
+@media (max-width: 720px) { .mem { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .mem { grid-template-columns: repeat(2, minmax(0, 1fr)); } h1 { font-size: 36px; } }
+
+.settings-keys { display: flex; flex-wrap: wrap; gap: 16px; }
+.settings-keys div { display: flex; gap: 8px; align-items: center; }
+footer { color: var(--muted); font-size: 13px; }
+</style>
+
+<div class="wrap">
+
+<header>
+  <h1>Touchord cheat sheet</h1>
+  <p class="lead">Green keys play chords. White buttons change things: tap for a quick action, or hold and slide on the touch bar to choose. On the bar, the far end always means more.</p>
+</header>
+
+<!-- Front panel -->
+<section class="panel diagram" aria-label="Front panel diagram">
+<svg viewBox="0 0 900 380" role="img" aria-labelledby="dgt">
+  <title id="dgt">Touchord front panel: touch bar on the left, screen, six white buttons B0 to B5 and seven green chord keys</title>
+  <!-- body -->
+  <rect x="10" y="10" width="880" height="360" rx="18" style="fill:var(--chip);stroke:var(--line)"/>
+  <!-- touch bar -->
+  <rect x="40" y="40" width="54" height="300" rx="10" style="fill:var(--bar-soft);stroke:var(--bar)" stroke-width="3"/>
+  <text x="67" y="62" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--bar)">FAR</text>
+  <text x="67" y="330" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--bar)">NEAR</text>
+  <path d="M67 300 V 90" style="stroke:var(--bar)" stroke-width="3" marker-end="url(#ah)"/>
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--bar)"/></marker></defs>
+  <text x="108" y="70" font-size="17" font-weight="700" style="fill:var(--ink)">TOUCH BAR</text>
+  <text x="108" y="92" font-size="15" style="fill:var(--muted)">far end = more:</text>
+  <text x="108" y="110" font-size="15" style="fill:var(--muted)">higher, faster,</text>
+  <text x="108" y="128" font-size="15" style="fill:var(--muted)">brighter, harder</text>
+  <!-- screen -->
+  <rect x="300" y="36" width="330" height="128" rx="6" fill="#0b0e0c" style="stroke:var(--white-edge)"/>
+  <text x="465" y="62" text-anchor="middle" font-size="15" fill="#cfe9d8" class="m">C  Bright 1</text>
+  <text x="465" y="104" text-anchor="middle" font-size="36" font-weight="700" fill="#e9fff1">Am</text>
+  <g font-size="13" fill="#cfe9d8" text-anchor="middle">
+    <text x="345" y="140">C</text><text x="385" y="140">F</text><text x="425" y="140">G</text>
+    <rect x="448" y="127" width="34" height="18" fill="#cfe9d8"/><text x="465" y="140" fill="#0b0e0c">Am</text>
+    <text x="505" y="140">Dm</text><text x="545" y="140">Em</text><text x="585" y="140">Gs4</text>
+  </g>
+  <text x="645" y="70" font-size="17" font-weight="700" style="fill:var(--ink)">SCREEN</text>
+  <text x="645" y="92" font-size="15" style="fill:var(--muted)">key and chord set,</text>
+  <text x="645" y="110" font-size="15" style="fill:var(--muted)">the chord you hold,</text>
+  <text x="645" y="128" font-size="15" style="fill:var(--muted)">all 7 chords below</text>
+  <!-- white buttons -->
+  <g font-size="17" font-weight="700" text-anchor="middle">
+    <g><rect x="250" y="192" width="64" height="38" rx="6" style="fill:var(--white-btn);stroke:var(--white-edge)" stroke-width="2"/><text x="282" y="217" fill="#1d221f">B0</text><text x="282" y="250" font-size="14" font-weight="600" style="fill:var(--muted)">MODE</text></g>
+    <g><rect x="354" y="192" width="64" height="38" rx="6" style="fill:var(--white-btn);stroke:var(--white-edge)" stroke-width="2"/><text x="386" y="217" fill="#1d221f">B1</text><text x="386" y="250" font-size="14" font-weight="600" style="fill:var(--muted)">OCT − · PLAY</text></g>
+    <g><rect x="458" y="192" width="64" height="38" rx="6" style="fill:var(--white-btn);stroke:var(--white-edge)" stroke-width="2"/><text x="490" y="217" fill="#1d221f">B2</text><text x="490" y="250" font-size="14" font-weight="600" style="fill:var(--muted)">OCT + · TOUCH</text></g>
+    <g><rect x="562" y="192" width="64" height="38" rx="6" style="fill:var(--white-btn);stroke:var(--white-edge)" stroke-width="2"/><text x="594" y="217" fill="#1d221f">B3</text><text x="594" y="250" font-size="14" font-weight="600" style="fill:var(--muted)">SIZE</text></g>
+    <g><rect x="666" y="192" width="64" height="38" rx="6" style="fill:var(--white-btn);stroke:var(--white-edge)" stroke-width="2"/><text x="698" y="217" fill="#1d221f">B4</text><text x="698" y="250" font-size="14" font-weight="600" style="fill:var(--muted)">CHORDS</text></g>
+    <g><rect x="770" y="192" width="64" height="38" rx="6" style="fill:var(--white-btn);stroke:var(--white-edge)" stroke-width="2"/><text x="802" y="217" fill="#1d221f">B5</text><text x="802" y="250" font-size="14" font-weight="600" style="fill:var(--muted)">KEY</text></g>
+  </g>
+  <!-- green keys -->
+  <g font-size="22" font-weight="700" text-anchor="middle">
+    <g><rect x="236" y="272" width="78" height="72" rx="8" style="fill:var(--green)"/><text x="275" y="303" style="fill:var(--green-ink)">1</text><text x="275" y="330" font-size="16" style="fill:var(--green-ink)">C</text></g>
+    <g><rect x="324" y="272" width="78" height="72" rx="8" style="fill:var(--green)"/><text x="363" y="303" style="fill:var(--green-ink)">2</text><text x="363" y="330" font-size="16" style="fill:var(--green-ink)">F</text></g>
+    <g><rect x="412" y="272" width="78" height="72" rx="8" style="fill:var(--green)"/><text x="451" y="303" style="fill:var(--green-ink)">3</text><text x="451" y="330" font-size="16" style="fill:var(--green-ink)">G</text></g>
+    <g><rect x="500" y="272" width="78" height="72" rx="8" style="fill:var(--green)"/><text x="539" y="303" style="fill:var(--green-ink)">4</text><text x="539" y="330" font-size="16" style="fill:var(--green-ink)">Am</text></g>
+    <g><rect x="588" y="272" width="78" height="72" rx="8" style="fill:var(--green)"/><text x="627" y="303" style="fill:var(--green-ink)">5</text><text x="627" y="330" font-size="16" style="fill:var(--green-ink)">Dm</text></g>
+    <g><rect x="676" y="272" width="78" height="72" rx="8" style="fill:var(--green)"/><text x="715" y="303" style="fill:var(--green-ink)">6</text><text x="715" y="330" font-size="16" style="fill:var(--green-ink)">Em</text></g>
+    <g><rect x="764" y="272" width="78" height="72" rx="8" style="fill:var(--green)"/><text x="803" y="303" style="fill:var(--green-ink)">7</text><text x="803" y="330" font-size="16" style="fill:var(--green-ink)">Gsus4</text></g>
+  </g>
+  <text x="108" y="300" font-size="17" font-weight="700" style="fill:var(--ink)">CHORD KEYS</text>
+  <text x="108" y="320" font-size="15" style="fill:var(--muted)">out of the box:</text>
+  <text x="108" y="338" font-size="15" style="fill:var(--muted)">C, Bright 1</text>
+</svg>
+</section>
+
+<!-- The one rule -->
+<section class="rule">
+  <div class="panel"><div class="big">Tap</div><p>A quick action. B0 next mode, B1 octave down, B2 octave up. B3 to B5 do nothing on a tap.</p></div>
+  <div class="panel"><div class="big">Hold <span>+</span> slide</div><p>Hold a white button, then touch the bar and slide. The screen shows the choices as a strip and plays the first chord so you hear it.</p></div>
+  <div class="panel"><div class="big">Far = <span>more</span></div><p>Away from you on the bar is higher, faster, brighter and harder, in every mode and every menu.</p></div>
+</section>
+
+<!-- Buttons -->
+<section class="sec">
+  <h2>The six white buttons</h2>
+  <p>Each strip below reads like the bar: far end at the top, near end at the bottom. The highlighted choice is the one you start with.</p>
+  <div class="buttons">
+
+    <article class="panel btn-card">
+      <header><div class="cap">B5</div><h3>Key</h3></header>
+      <dl><dt>Tap</dt><dd class="none">nothing</dd><dt>Hold + slide</dt><dd>Moves all 7 chords to a new key. 12 choices.</dd></dl>
+      <div class="zones dense"><span class="lab">Far</span><ol><li>B</li><li>Bb</li><li>A</li><li>Ab</li><li>G</li><li>F#</li><li>F</li><li>E</li><li>Eb</li><li>D</li><li>Db</li><li class="on">C</li></ol><span class="lab">Near</span></div>
+    </article>
+
+    <article class="panel btn-card">
+      <header><div class="cap">B4</div><h3>Chord set</h3></header>
+      <dl><dt>Tap</dt><dd class="none">nothing</dd><dt>Hold + slide</dt><dd>Picks which 7 chords the keys play, from mostly minor (Dark) to mostly major (Bright). The screen suggests keys to try, like "Try 2 3 4 1". Warm sets raise the size to at least Rich.</dd></dl>
+      <div class="zones dense"><span class="lab">Far</span><ol><li>Bright 2</li><li class="on">Bright 1</li><li>Warm 4</li><li>Warm 3</li><li>Warm 2</li><li>Warm 1</li><li>Dark 4</li><li>Dark 3</li><li>Dark 2</li><li>Dark 1</li></ol><span class="lab">Near</span></div>
+    </article>
+
+    <article class="panel btn-card">
+      <header><div class="cap">B3</div><h3>Size</h3></header>
+      <dl><dt>Tap</dt><dd class="none">nothing</dd><dt>Hold + slide</dt><dd>How many notes each chord has. More notes sound fuller, like Cmaj7 or Cmaj9 instead of C.</dd></dl>
+      <div class="zones"><span class="lab">Far</span><ol><li>Lush · 5</li><li>Rich · 4</li><li class="on">Simple · 3</li></ol><span class="lab">Near</span></div>
+    </article>
+
+    <article class="panel btn-card">
+      <header><div class="cap">B2</div><h3>Octave up · Touch</h3></header>
+      <dl><dt>Tap</dt><dd>Octave up (up to 6)</dd><dt>Hold + slide</dt><dd>How hard notes play (MIDI velocity). Not in Drum, where the bar does this.</dd></dl>
+      <div class="zones"><span class="lab">Far · hard</span><ol><li>127</li><li>112</li><li class="on">100</li><li>88</li><li>76</li><li>64</li><li>52</li><li>40</li></ol><span class="lab">Near · soft</span></div>
+    </article>
+
+    <article class="panel btn-card">
+      <header><div class="cap">B1</div><h3>Octave down · Play</h3></header>
+      <dl><dt>Tap</dt><dd>Octave down (down to 2)</dd><dt>Hold + slide</dt><dd>This mode's playing style:<br>Compose: roll gap<br>Arp: pattern<br>Strum, Omni: bar reach<br>Perform: what the bar sends<br>Drum: Kit or Notes</dd></dl>
+      <div class="zones"><span class="lab">e.g. Arp</span><ol><li>Chord</li><li>Random</li><li>Up-Down</li><li>Down</li><li class="on">Up</li></ol><span class="lab">Near</span></div>
+    </article>
+
+    <article class="panel btn-card">
+      <header><div class="cap">B0</div><h3>Mode</h3></header>
+      <dl><dt>Tap</dt><dd>Next mode</dd><dt>Hold + slide</dt><dd>Pick a mode; it switches when you let go.</dd><dt>Hold alone</dt><dd>Settings (just over half a second)</dd></dl>
+      <div class="zones"><span class="lab">Far</span><ol><li>Drum</li><li>Perform</li><li>Omni</li><li>Strum</li><li>Arp</li><li class="on">Compose</li></ol><span class="lab">Near</span></div>
+    </article>
+
+  </div>
+</section>
+
+<!-- Combos -->
+<section class="sec">
+  <h2>Combinations</h2>
+  <div class="combos">
+    <div class="panel combo"><div class="keys"><span class="kbd">B0</span> hold + tap <span class="kbd g">1-7</span></div><h3>Recall a song memory</h3><p>Switches the whole setup. Your MIDI and Bluetooth settings stay.</p></div>
+    <div class="panel combo"><div class="keys"><span class="kbd">B0</span> hold + <span class="kbd g">1-7</span> hold 2 s</div><h3>Save a song memory</h3><p>Wait for "Saved to". Your setup also saves itself a few seconds after each change.</p></div>
+    <div class="panel combo"><div class="keys"><span class="kbd">B1</span> + <span class="kbd">B2</span> hold</div><h3>Help screen</h3><p>Lists what every button and the bar do in the current mode.</p></div>
+    <div class="panel combo"><div class="keys"><span class="kbd">B0</span> + <span class="kbd">B2</span> + <span class="kbd">B4</span> hold 3 s</div><h3>Firmware update</h3><p>The screen counts down. Let go to cancel.</p></div>
+  </div>
+</section>
+
+<!-- Modes -->
+<section class="sec">
+  <h2>Modes</h2>
+  <p>Tap B0 to go round the circle: Compose, Arp, Strum, Omni, Perform, Drum, then back to Compose.</p>
+  <div class="panel tablebox">
+    <table>
+      <thead><tr><th>Mode</th><th>Green keys</th><th>Touch bar, near → far</th><th>Hold B1 + slide</th></tr></thead>
+      <tbody>
+        <tr><td>Compose<span class="step">tap B0 → Arp</span></td><td>Hold a key to play its chord.</td><td>While a chord sounds: Flip 3, Flip 4, 4, 5, 6 notes. Flip swaps major and minor. Lift to go back.</td><td>Roll: Off, 10, 20, 30, 50, 80 ms</td></tr>
+        <tr><td>Arp<span class="step">tap B0 → Strum</span></td><td>Press a key: its notes play one by one and keep going. Same key again stops.</td><td>Nearest two parts: tap to step range 1-4 octaves. Rest: speed, 1/4 up to 1/32.</td><td>Up, Down, Up-Down, Random, Chord</td></tr>
+        <tr><td>Strum<span class="step">tap B0 → Omni</span></td><td>Picks the chord. Nothing sounds yet.</td><td>Slide to pluck its notes, low to high.</td><td>Reach: 1-4 octaves</td></tr>
+        <tr><td>Omni<span class="step">tap B0 → Perform</span></td><td>Plays a low root and fifth while held.</td><td>Slide to strum pairs of notes, low to high.</td><td>Reach: 1-4 octaves</td></tr>
+        <tr><td>Perform<span class="step">tap B0 → Drum</span></td><td>Hold a key to play its chord.</td><td>Sends filter (CC 74) as you slide, or bend or pressure.</td><td>CC, Bend, Press</td></tr>
+        <tr><td>Drum<span class="step">tap B0 → Compose</span></td><td>Kick, snare, clap, hat, open hat, tom, crash.</td><td>How hard the next hit plays: soft to hard.</td><td>Kit or Notes</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Memories -->
+<section class="sec">
+  <h2>Starter song memories</h2>
+  <p>Hold B0 and tap a green key. All start in C; save over any of them.</p>
+  <div class="mem">
+    <div><b>1</b><span>Compose · Bright 1</span></div>
+    <div><b>2</b><span>Compose · Warm 3, Lush, rolled</span></div>
+    <div><b>3</b><span>Arp · Dark 2</span></div>
+    <div><b>4</b><span>Strum · Bright 2</span></div>
+    <div><b>5</b><span>Omni · Warm 2</span></div>
+    <div><b>6</b><span>Arp · Warm 1, Up-Down</span></div>
+    <div><b>7</b><span>Perform · Dark 3, bend</span></div>
+  </div>
+</section>
+
+<!-- Settings -->
+<section class="sec">
+  <h2>In Settings</h2>
+  <div class="panel settings-keys">
+    <div><span class="kbd">B0</span> Exit to Compose</div>
+    <div><span class="kbd">B1</span> Back</div>
+    <div><span class="kbd">B2</span> OK</div>
+    <div><span class="kbd" style="background:var(--bar-soft);border-color:var(--bar)">Bar</span> Scroll or change a value</div>
+  </div>
+  <p>Worth knowing: Settings › MIDI › Quantize lines presses up with the beat (Off, 1/16, 1/8, 1/4, 1 Bar). It is Off out of the box; when on, a small Q shows at the bottom left of the screen.</p>
+</section>
+
+<footer>Matches the Touchord firmware on main, 15 October 2026, TCw single build (B0 on the left).</footer>
+</div>
+
+</body></html>
