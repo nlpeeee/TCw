@@ -8,6 +8,7 @@
 
 #include "Arp.h"
 #include "Globals.h"
+#include "Timing/Quantize.h"
 #include "Helper.h"
 #include "Sync.h"
 #include "IO/Midi.h"
@@ -217,6 +218,7 @@ void arp_draw()
     int w   = (int)strlen(info) * adv - font_3x6[2];
     ssd1306_draw_string_with_font(&tc_disp, (128 - w) / 2, 47, 1, font_3x6, info);
     draw_mode_label("Arp");
+    quant_draw_marker();
 }
 
 void arp_update() {}

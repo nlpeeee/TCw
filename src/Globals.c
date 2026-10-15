@@ -79,6 +79,8 @@ const TouchordSettings tc_app_default = {
     .chord_set                   = CHORD_SET_DEFAULT,
 
     .drum_layout                 = DRUM_KIT,
+
+    .quantize                    = 0,   // off
 };
 
 TouchordSettings tc_app;

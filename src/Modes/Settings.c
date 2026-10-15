@@ -17,6 +17,7 @@
 #include "Data/Memories.h"
 #include "IO/BleMidi.h"
 #include "Timing/MidiClock.h"
+#include "Timing/Quantize.h"
 #include "Compose.h"
 #include "Arp.h"
 #include "Rendering/Graphics.h"
@@ -153,12 +154,12 @@ UINode tree[MAX_UI_NODES] = {
 
     // 1-7: First Page
     {"Modes", UI_SUBMENU, 3, 8,  NULL, {0}, NULL},
-    {"MIDI", UI_SUBMENU, 6, 29,  NULL, {0}, NULL},
+    {"MIDI", UI_SUBMENU, 7, 29,  NULL, {0}, NULL},
     {"Chords", UI_ENUM, CHORD_SET_COUNT, 0, trigger_chord_set, {.en_val = &tc_app.chord_set}, chord_set_names},
     {"Load Preset", UI_INT, FLASH_PRESET_COUNT, 0, trigger_load_preset, {.i_val = &preset_slot_load}, NULL},
     {"Save Preset", UI_INT, FLASH_PRESET_COUNT, 0, trigger_save_preset, {.i_val = &preset_slot_save}, NULL},
-    {"Advanced", UI_SUBMENU, 6, 35, NULL, {0}, NULL},
-    {"Firmware", UI_SUBMENU, 2, 49, NULL, {0}, NULL},
+    {"Advanced", UI_SUBMENU, 6, 36, NULL, {0}, NULL},
+    {"Firmware", UI_SUBMENU, 2, 50, NULL, {0}, NULL},
 
     // 8-10: Modes Settings
     {"Compose", UI_SUBMENU, 4, 11, NULL, {0}, NULL},
@@ -189,36 +190,37 @@ UINode tree[MAX_UI_NODES] = {
     {"Tempo",   UI_INT,    241,              40, NULL, {.i_val=&tc_app.arp_bpm},      NULL},
     {"Latch",   UI_TOGGLE, 2,                 0, NULL, {.toggle=&tc_app.arp_latch},   on_off_sel},
 
-    // 29-34: MIDI Settings
+    // 29-35: MIDI Settings
     {"Channel", UI_INT, 16, 0, NULL,  {.i_val=&tc_app.channel}, NULL},
     {"TRS Midi", UI_ENUM, 2, 0, trigger_midi_type, {.en_val=&tc_app.midi_type}, trs_midi_sel},
     {"Velocity", UI_INT, 128, 0, NULL, {.i_val=&tc_app.velocity}, NULL},
     {"Bluetooth", UI_TOGGLE, 2, 0, NULL, {.toggle=&tc_app.bluetooth}, on_off_sel},
     {"Clock In", UI_TOGGLE, 2, 0, NULL, {.toggle=&tc_app.clock_in}, on_off_sel},
+    {"Quantize", UI_ENUM, QUANT_GRID_COUNT, 0, NULL, {.en_val=&tc_app.quantize}, quant_grid_names},
     {"Bass", UI_ENUM, 17, 0, NULL, {.en_val=&tc_app.bass_channel}, bass_sel},
 
-    // 35-40 Advanced: the key's root and scale, and the custom scales
+    // 36-41 Advanced: the key's root and scale, and the custom scales
     {"Root", UI_ENUM, 17, 0, NULL, {.en_val = &tc_app.key[0].root}, root_names},
     {"Scale", UI_ENUM, SCALE_COUNT, 1, NULL, {.en_val = &tc_app.key[0].quality}, scale_sel},
-    {"Custom 0", UI_SUBMENU, 2, 41, NULL, {0}, NULL},
-    {"Custom 1", UI_SUBMENU, 2, 43, NULL, {0}, NULL},
-    {"Custom 2", UI_SUBMENU, 2, 45, NULL, {0}, NULL},
-    {"Custom 3", UI_SUBMENU, 2, 47, NULL, {0}, NULL},
+    {"Custom 0", UI_SUBMENU, 2, 42, NULL, {0}, NULL},
+    {"Custom 1", UI_SUBMENU, 2, 44, NULL, {0}, NULL},
+    {"Custom 2", UI_SUBMENU, 2, 46, NULL, {0}, NULL},
+    {"Custom 3", UI_SUBMENU, 2, 48, NULL, {0}, NULL},
 
-    // 41-42 Advanced.Custom 0
+    // 42-43 Advanced.Custom 0
     {"Intervals", UI_PER_BUTTON_INT,  12, 0, trigger_custom_scale, {.i_val  = tc_app.custom_scale_intervals[0]}, NULL},
     {"Degrees",   UI_PER_BUTTON_ENUM, 7,  1, trigger_custom_scale, {.en_val = tc_app.custom_scale_chords[0]},    degree_sel},
-    // 43-44 Advanced.Custom 1
+    // 44-45 Advanced.Custom 1
     {"Intervals", UI_PER_BUTTON_INT,  12, 0, trigger_custom_scale, {.i_val  = tc_app.custom_scale_intervals[1]}, NULL},
     {"Degrees",   UI_PER_BUTTON_ENUM, 7,  1, trigger_custom_scale, {.en_val = tc_app.custom_scale_chords[1]},    degree_sel},
-    // 45-46 Advanced.Custom 2
+    // 46-47 Advanced.Custom 2
     {"Intervals", UI_PER_BUTTON_INT,  12, 0, trigger_custom_scale, {.i_val  = tc_app.custom_scale_intervals[2]}, NULL},
     {"Degrees",   UI_PER_BUTTON_ENUM, 7,  1, trigger_custom_scale, {.en_val = tc_app.custom_scale_chords[2]},    degree_sel},
-    // 47-48 Advanced.Custom 3
+    // 48-49 Advanced.Custom 3
     {"Intervals", UI_PER_BUTTON_INT,  12, 0, trigger_custom_scale, {.i_val  = tc_app.custom_scale_intervals[3]}, NULL},
     {"Degrees",   UI_PER_BUTTON_ENUM, 7,  1, trigger_custom_scale, {.en_val = tc_app.custom_scale_chords[3]},    degree_sel},
 
-    // 49-50: Firmware
+    // 50-51: Firmware
     {"Reset Factory",   UI_TRIGGER, 0, 0, trigger_factory_reset, {0}, NULL},
     {"Firmware Update", UI_TRIGGER, 0, 0, trigger_boot_sel,      {0}, NULL},
 };

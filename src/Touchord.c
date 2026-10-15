@@ -11,6 +11,7 @@
 #include "hardware/i2c.h"
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
+#include "Timing/Quantize.h"
 #include "pico/bootrom.h"
 #include "pico/time.h"
 
@@ -171,14 +172,12 @@ void poll_buttons()
         bool curr_state = gpio_get(i + KEY_0);
         if (tc_key_states[i] && !curr_state) {
             if (!memory_key_down(i, now)) {
-                tc_key_down(i);
                 tc_last_key = i;
+                quant_key_down(i);
             }
         } else if (!tc_key_states[i] && curr_state) {
-            if (!memory_key_up(i)) {
-                tc_key_up(i);
-                tc_key_up_independent(i);
-            }
+            if (!memory_key_up(i))
+                quant_key_up(i);
         }
         tc_key_states[i] = curr_state;
     }
@@ -420,6 +419,7 @@ int main()
         }
 
         autosave_task();
+        quant_task();
         arp_task();
         sched_task();
         midi_out_task();

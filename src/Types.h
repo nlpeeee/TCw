@@ -185,6 +185,8 @@ typedef struct
     uint8_t chord_set;          // index into chord_sets[] in Notes/ChordSets.c
 
     uint8_t drum_layout;        // DrumLayout: General MIDI kit or notes in a row
+
+    uint8_t quantize;           // index into quant_grid_names[] in Timing/Quantize.c, 0 = off
 } TouchordSettings;
 
 typedef enum
