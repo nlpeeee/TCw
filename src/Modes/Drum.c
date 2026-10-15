@@ -82,7 +82,7 @@ void drum_key_up_independent(uint8_t key)
 void drum_button_down(uint8_t button)
 {
     switch (button) {
-        case 0: tc_app_set_mode(TOUCHORD_SETTINGS); break;
+        case 0: tc_app_set_mode(TOUCHORD_COMPOSE); break;   // hold B0 for Settings
         case 1: if (tc_app.octave > 0) tc_app.octave--; break;
         case 2: if (tc_app.octave < 7) tc_app.octave++; break;
     }

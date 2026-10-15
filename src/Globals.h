@@ -70,6 +70,8 @@ void tc_bind_handlers(const ModeHandlers *h);
 
 extern bool tc_running;
 extern volatile bool tc_trigger_bootsel;
+// Set by core 0 once USB MIDI or Bluetooth is up and the buttons are read.
+extern volatile bool tc_connected;
 
 extern TrillBar tc_bar;
 extern ssd1306_t tc_disp;
@@ -92,5 +94,9 @@ extern bool    tc_trill_show;
 extern char     tc_overlay_msg[24];
 extern uint32_t tc_overlay_start_ms;
 extern uint32_t tc_overlay_dur_ms;
+
+// Older presets kept three key slots switched by B3-B5. The key controls now
+// act on one, so the active slot is moved into slot 0.
+void use_single_key_slot(TouchordSettings* s);
 
 #endif
