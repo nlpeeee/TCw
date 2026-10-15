@@ -258,17 +258,6 @@ void arp_button_down(uint8_t button)
     }
 }
 
-void arp_button_double_down(uint8_t button)
-{
-    uint8_t p = clamp_setting(tc_app.arp_pattern, ARP_PATTERN_COUNT);
-    switch (button) {
-        case 1: p = (p + ARP_PATTERN_COUNT - 1) % ARP_PATTERN_COUNT; break;
-        case 2: p = (p + 1) % ARP_PATTERN_COUNT; break;
-        default: return;
-    }
-    tc_app.arp_pattern = p;
-    trigger_overlay(arp_pattern_names[p], 600);
-}
 
 void arp_button_up(uint8_t button) {}
 
@@ -285,8 +274,10 @@ void arp_trill_down(float pos, float size)
 
     critical_section_enter_blocking(&tc_app_lock);
     if (seg < ARP_RATE_COUNT) {
-        tc_app.arp_rate = seg;
-        snprintf(arp_tooltip, sizeof arp_tooltip, "Rate %s", arp_rate_names[seg]);
+        // The far end of the bar (position 0) is the fastest rate.
+        int rate = ARP_RATE_COUNT - 1 - seg;
+        tc_app.arp_rate = rate;
+        snprintf(arp_tooltip, sizeof arp_tooltip, "Rate %s", arp_rate_names[rate]);
     } else {
         tc_app.arp_octaves = (clamp_setting(tc_app.arp_octaves, ARP_OCTAVES_MAX) + 1) % ARP_OCTAVES_MAX;
         snprintf(arp_tooltip, sizeof arp_tooltip, "Range %s", arp_octave_names[tc_app.arp_octaves]);

@@ -148,10 +148,6 @@ void perform_button_down(uint8_t button)
     }
 }
 
-void perform_button_double_down(uint8_t button)
-{
-
-}
 
 void perform_button_up(uint8_t button)
 {

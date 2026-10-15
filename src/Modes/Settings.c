@@ -362,10 +362,6 @@ void settings_button_down(uint8_t button)
     }
 }
 
-void settings_button_double_down(uint8_t button)
-{
-
-}
 
 void settings_button_up(uint8_t button)
 {

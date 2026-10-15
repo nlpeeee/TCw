@@ -190,7 +190,6 @@ void compose_button_down(uint8_t button)
     }
 }
 
-void compose_button_double_down(uint8_t button) {}
 void compose_button_up(uint8_t button) {}
 
 static int update_trill_state(float pos)

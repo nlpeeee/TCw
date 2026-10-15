@@ -82,15 +82,6 @@ void strum_button_down(uint8_t button)
     }
 }
 
-void strum_button_double_down(uint8_t button)
-{
-    critical_section_enter_blocking(&tc_app_lock);
-    switch (button) {
-        case 1: if (tc_app.extension_count > 1) tc_app.extension_count--; break;
-        case 2: if (tc_app.extension_count < 5) tc_app.extension_count++; break;
-    }
-    critical_section_exit(&tc_app_lock);
-}
 
 void strum_button_up(uint8_t button) {}
 

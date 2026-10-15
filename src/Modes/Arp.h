@@ -31,7 +31,6 @@ void arp_key_down(uint8_t key);
 void arp_key_up(uint8_t key);
 void arp_key_up_independent(uint8_t key);
 void arp_button_down(uint8_t button);
-void arp_button_double_down(uint8_t button);
 void arp_button_up(uint8_t button);
 void arp_trill_down(float pos, float size);
 void arp_trill_up();

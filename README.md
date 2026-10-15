@@ -19,14 +19,15 @@ TCw tracks [dovker/Touchord](https://github.com/dovker/Touchord) (currently v1.0
   - **Settings > MIDI > Bluetooth** turns Bluetooth MIDI on or off. The LED blinks slowly while USB or Bluetooth is connected.
   - "BT Connected" / "BT Disconnected" pops up on screen when a host connects or drops.
 - **Arp mode** (B0 from Compose). Hold a key and its chord plays one note at a time.
-  - Touch bar, left to right in 8 parts: six rates (1/4, 1/8, 1/8T, 1/16, 1/16T, 1/32), then the last two parts together: each tap steps the range through 1-4 octaves.
+  - Touch bar in 8 parts: six rates, fastest (1/32) at the far end down to 1/4, then the two parts nearest you together: each tap steps the range through 1-4 octaves.
   - Latch is on by default: the arp keeps going after you let go, another key changes chord, and the same key again stops it. Turn it off under Settings > Modes > Arp.
-  - Double-click B1/B2 steps the pattern: Up, Down, Up-Down, Random, Chord.
+  - Hold B1 and slide to pick the pattern: Up, Down, Up-Down, Random, Chord.
   - Pattern, rate, range, gate, tempo and latch are also under **Settings > Modes > Arp**.
 - **MIDI clock in** over USB or Bluetooth. The arp locks to the host's beat while it plays and uses its tempo while it is stopped; with no clock it uses the Arp Tempo setting. **Settings > MIDI > Clock In** shows the incoming tempo.
 - **Bass channel** (**Settings > MIDI > Bass**, Off by default). Compose and Arp send the chord root an octave down on that channel; Omni sends its root and fifth there.
 - **Pitch bend and pressure from the touch bar** in Perform: set **Settings > Modes > Perform > Pos Sends** or **Size Sends** to **Bend** or **Press** instead of CC. Bend follows your finger from wherever it lands (half the bar is a full bend); Press sends channel pressure from how firmly you press. Both return to rest when you lift.
 - **Compose Roll** (**Settings > Modes > Compose > Roll**) plays chords from the lowest note up, 10 to 80 ms apart.
+- **One rule for every white button: tap, or hold and slide on the bar.** Tap B0 for the next mode, B1/B2 for octave down/up (no more double-clicks, so taps don't wait). Hold one and slide to choose: **B0** a mode (it switches when you let go), **B1** the mode's playing style (Compose roll, Arp pattern, Perform's bar output, Strum and Omni span), **B2** touch (velocity, soft near you to hard at the far end), **B3** size, **B4** chord set, **B5** key. Hold **B1 + B2** together for a help screen. On the bar the far end is always more: higher, faster, brighter, harder.
 - **Safer first run.** Until USB or Bluetooth connects, the screen says so instead of sitting on a silent play screen. Firmware mode (B0 + B2 + B4) needs a 3 second hold, and **Reset Factory** and **Firmware Update** ask for a second OK press. Preset slots are numbered from 1; slot 1 is the one loaded at power-on.
 
 ## Building
