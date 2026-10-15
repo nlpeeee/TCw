@@ -28,4 +28,9 @@ bool flash_preset_exists(uint8_t slot);
 // Erase every preset slot.
 void flash_clear_all_presets(void);
 
+// The setup as it was last played, saved automatically (see Data/Memories.c).
+bool flash_load_last(TouchordSettings* settings);
+void flash_save_last(const TouchordSettings* settings);
+void flash_clear_last(void);
+
 #endif

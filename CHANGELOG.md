@@ -16,6 +16,8 @@ when cutting a release.
 
 - A "Connect USB or Bluetooth" screen until a host connects.
 - Reset Factory and Firmware Update ask for a second OK press.
+- The setup is saved automatically and restored at power-on, including the mode (Touchord used to always start in Compose).
+- Song memories: hold B0 + a green key to recall memory 1-7, keep the key held 2 s to save. Empty memories hold 7 starter setups.
 - A row of the 7 keys' chords on the play screen, with the held key lit.
 - Hold B0 and slide to pick a mode, B1 for the mode's playing style, B2 for velocity; hold B1 + B2 for a help screen.
 

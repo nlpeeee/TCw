@@ -69,6 +69,11 @@ extern bool tc_running;
 extern volatile bool tc_trigger_bootsel;
 // Set by core 0 once USB MIDI or Bluetooth is up and the buttons are read.
 extern volatile bool tc_connected;
+// Set when the whole setup was swapped (a song memory), so core 1 restarts
+// the mode even if it is the same one.
+extern volatile bool tc_mode_restart;
+// Play modes in B0 order.
+extern const char* const tc_mode_names[6];
 
 extern TrillBar tc_bar;
 extern ssd1306_t tc_disp;
