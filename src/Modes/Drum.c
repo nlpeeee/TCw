@@ -88,7 +88,6 @@ void drum_button_down(uint8_t button)
     }
 }
 
-void drum_button_double_down(uint8_t button) {}
 void drum_button_up(uint8_t button) {}
 
 void drum_trill_down(float pos, float size)

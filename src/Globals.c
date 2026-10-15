@@ -88,7 +88,6 @@ void (*tc_key_down)(uint8_t) = NULL;
 void (*tc_key_up)(uint8_t) = NULL;
 void (*tc_key_up_independent)(uint8_t) = NULL;
 void (*tc_button_down)(uint8_t) = NULL;
-void (*tc_button_double_down)(uint8_t) = NULL;
 void (*tc_button_up)(uint8_t) = NULL;
 void (*tc_trill_down)(float, float) = NULL;
 void (*tc_trill_up)() = NULL;
@@ -101,7 +100,6 @@ void tc_bind_handlers(const ModeHandlers *h)
     tc_key_up             = h->key_up;
     tc_key_up_independent = h->key_up_independent;
     tc_button_down        = h->button_down;
-    tc_button_double_down = h->button_double_down;
     tc_button_up          = h->button_up;
     tc_trill_down         = h->trill_down;
     tc_trill_up           = h->trill_up;
@@ -117,13 +115,10 @@ ssd1306_t tc_disp;
 
 bool tc_key_states[NUM_KEYS];
 bool tc_control_states[NUM_CONTROLS];
-bool tc_control_double_click[NUM_CONTROLS] = {false, true, true, false, false, false};
 bool tc_touch_state = false;
+volatile bool tc_button_slid[NUM_CONTROLS];
 
-uint64_t tc_time_last_control = 0;
-uint8_t tc_last_control_clicks = 0;
 uint8_t tc_last_key = 0;
-uint8_t tc_last_control = 0;
 
 float   tc_trill_pos = 0.0f;
 float   tc_trill_strength = 0.0f;

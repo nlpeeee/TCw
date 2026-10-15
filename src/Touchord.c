@@ -54,29 +54,23 @@ static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 // Set by core 1 once it can be paused for flash writes (see io_task).
 static volatile bool core1_lockout_ready = false;
 
-// Fire a held-back single/double click on a double-click-enabled button.
-static void flush_pending_click(void)
-{
-    if (tc_last_control_clicks >= 2)      tc_button_double_down(tc_last_control);
-    else if (tc_last_control_clicks == 1) tc_button_down(tc_last_control);
-    tc_last_control_clicks = 0;
-}
-
 // B0 cycles modes on a short press and opens Settings when held. Its press
-// is held back until release (or the hold time) so the two don't collide.
+// is held back until release (or the hold time) so the two don't collide,
+// and a hold that slides on the bar to pick a mode does neither.
 static uint64_t b0_down_time = 0;
 static bool b0_held = false;
 
 static void poll_b0(bool curr_state, uint64_t now)
 {
     if (tc_control_states[0] && !curr_state) {
-        flush_pending_click();
         b0_down_time = now;
         b0_held = false;
+        tc_button_slid[0] = false;
     } else if (!tc_control_states[0] && curr_state) {
-        if (!b0_held) tc_button_down(0);
+        if (!b0_held && !tc_button_slid[0]) tc_button_down(0);
         tc_button_up(0);
-    } else if (!curr_state && !b0_held && now - b0_down_time >= B0_HOLD_MS
+    } else if (!curr_state && !b0_held && !tc_button_slid[0]
+               && now - b0_down_time >= B0_HOLD_MS
                && tc_control_states[2] && tc_control_states[4]) {
         // Not while B2 and B4 are down, so the BOOTSEL hold stays where it is.
         b0_held = true;
@@ -98,7 +92,9 @@ static void poll_bootsel_combo(uint64_t now)
         return;
     }
     if (combo_start == 0) combo_start = now;
-    b0_held = true;     // letting go of B0 afterwards doesn't change mode
+    // Letting go afterwards neither changes mode nor octave.
+    b0_held = true;
+    tc_button_slid[2] = true;
     uint64_t held = now - combo_start;
     if (held >= BOOTSEL_HOLD_MS) {
         tc_trigger_bootsel = true;
@@ -116,31 +112,17 @@ static void poll_bootsel_combo(uint64_t now)
 void poll_buttons()
 {
     uint64_t now = to_ms_since_boot(get_absolute_time());
-    if (now - tc_time_last_control > DEFAULT_DOUBLE_CLICK_MS)
-        flush_pending_click();
 
     for (int i = 0; i < NUM_CONTROLS; i++) {
         bool curr_state = gpio_get(CONTROL_PIN(i));
         if (i == 0) {
             poll_b0(curr_state, now);
         } else if (tc_control_states[i] && !curr_state) {
-            // Another button settles a pending click first, so it is neither
-            // lost nor replayed as this button.
-            if (tc_control_double_click[i]) {
-                if (tc_last_control_clicks > 0 && tc_last_control == i
-                    && now - tc_time_last_control < DEFAULT_DOUBLE_CLICK_MS) {
-                    tc_last_control_clicks++;
-                } else {
-                    flush_pending_click();
-                    tc_time_last_control = now;
-                    tc_last_control_clicks = 1;
-                    tc_last_control = i;
-                }
-            } else {
-                flush_pending_click();
-                tc_button_down(i);
-            }
+            tc_button_slid[i] = false;
+            // B1 and B2 also hold and slide, so their tap fires on release.
+            if (i > 2) tc_button_down(i);
         } else if (!tc_control_states[i] && curr_state) {
+            if (i <= 2 && !tc_button_slid[i]) tc_button_down(i);
             tc_button_up(i);
         }
         tc_control_states[i] = curr_state;
