@@ -48,6 +48,9 @@ static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 // Holding B0 this long jumps to Settings; a shorter press fires on release.
 #define B0_HOLD_MS 600
 
+// B0 + B2 + B4 held this long drops into BOOTSEL, so a stray press can't.
+#define BOOTSEL_HOLD_MS 3000
+
 // Set by core 1 once it can be paused for flash writes (see io_task).
 static volatile bool core1_lockout_ready = false;
 
@@ -73,10 +76,40 @@ static void poll_b0(bool curr_state, uint64_t now)
     } else if (!tc_control_states[0] && curr_state) {
         if (!b0_held) tc_button_down(0);
         tc_button_up(0);
-    } else if (!curr_state && !b0_held && now - b0_down_time >= B0_HOLD_MS) {
+    } else if (!curr_state && !b0_held && now - b0_down_time >= B0_HOLD_MS
+               && tc_control_states[2] && tc_control_states[4]) {
+        // Not while B2 and B4 are down, so the BOOTSEL hold stays where it is.
         b0_held = true;
         if (tc_app_get_mode() != TOUCHORD_SETTINGS)
             tc_app_set_mode(TOUCHORD_SETTINGS);
+    }
+}
+
+// Hold B0 + B2 + B4 to drop into BOOTSEL, with a countdown on screen.
+static void poll_bootsel_combo(uint64_t now)
+{
+    static uint64_t combo_start = 0;
+    static int shown = -1;
+
+    if (tc_control_states[0] || tc_control_states[2] || tc_control_states[4]) {
+        if (shown >= 0) trigger_overlay("", 0);
+        combo_start = 0;
+        shown = -1;
+        return;
+    }
+    if (combo_start == 0) combo_start = now;
+    b0_held = true;     // letting go of B0 afterwards doesn't change mode
+    uint64_t held = now - combo_start;
+    if (held >= BOOTSEL_HOLD_MS) {
+        tc_trigger_bootsel = true;
+        return;
+    }
+    int left = (int)((BOOTSEL_HOLD_MS - held + 999) / 1000);
+    if (left != shown) {
+        char msg[24];
+        snprintf(msg, sizeof msg, "Firmware mode in %d", left);
+        trigger_overlay(msg, 1100);
+        shown = left;
     }
 }
 
@@ -113,9 +146,7 @@ void poll_buttons()
         tc_control_states[i] = curr_state;
     }
 
-    //B0 + B2 + B4: drop into BOOTSEL.
-    if (!tc_control_states[0] && !tc_control_states[2] && !tc_control_states[4])
-        tc_trigger_bootsel = true;
+    poll_bootsel_combo(now);
 
     for (int i = 0; i < NUM_KEYS; i++) {
         bool curr_state = gpio_get(i + KEY_0);
@@ -274,6 +305,13 @@ void io_task()
         }
 
         ssd1306_clear(&tc_disp);
+        if (!tc_connected) {
+            draw_connect_screen(tc_app.bluetooth);
+            draw_overlay();
+            ssd1306_show(&tc_disp);
+            sleep_ms(20);
+            continue;
+        }
         tc_draw();
         tc_update();
         draw_trill_indicator();
@@ -333,9 +371,10 @@ int main()
         ble_midi_task();
         midi_clock_task();
 
-        if ((tud_midi_mounted() || ble_midi_is_connected())
-            && time_reached(next_button_poll)) {
-            tc_connected = true;
+        // Keys and buttons only play while something is listening; until
+        // then the screen asks for a connection.
+        tc_connected = tud_midi_mounted() || ble_midi_is_connected();
+        if (tc_connected && time_reached(next_button_poll)) {
             poll_buttons();
             next_button_poll = make_timeout_time_ms(BUTTON_POLL_MS);
         }

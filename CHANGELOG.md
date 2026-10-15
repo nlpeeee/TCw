@@ -14,7 +14,14 @@ when cutting a release.
 
 ### Added
 
+- A "Connect USB or Bluetooth" screen until a host connects.
+- Reset Factory and Firmware Update ask for a second OK press.
+
 ### Changed
+
+- B0 + B2 + B4 must be held for 3 seconds, with a countdown, to enter BOOTSEL.
+- Preset slots are shown numbered from 1.
+- Perform's "Pos Keep" / "Size Keep" are renamed "Pos Resets" / "Size Resets", which is what they do.
 
 ### Fixed
 
