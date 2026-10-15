@@ -215,7 +215,7 @@ void arp_draw()
     }
     int adv = font_3x6[1] + font_3x6[2];
     int w   = (int)strlen(info) * adv - font_3x6[2];
-    ssd1306_draw_string_with_font(&tc_disp, (128 - w) / 2, 42, 1, font_3x6, info);
+    ssd1306_draw_string_with_font(&tc_disp, (128 - w) / 2, 47, 1, font_3x6, info);
     draw_mode_label("Arp");
 }
 
