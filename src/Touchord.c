@@ -256,6 +256,8 @@ void init_i2c()
 
 TouchordMode prevMode = TOUCHORD_COMPOSE;
 
+static void start_mode(TouchordMode mode);
+
 void select_mode(TouchordMode mode)
 {
     switch (prevMode) {
@@ -267,6 +269,11 @@ void select_mode(TouchordMode mode)
         case TOUCHORD_DRUM:     drum_end();     break;
         case TOUCHORD_SETTINGS: settings_end(); break;
     }
+    start_mode(mode);
+}
+
+static void start_mode(TouchordMode mode)
+{
     switch (mode) {
         case TOUCHORD_COMPOSE:  compose_start();  break;
         case TOUCHORD_ARP:      arp_start();      break;
@@ -377,13 +384,14 @@ int main()
     tc_app = tc_app_default;
     tc_app_working = tc_app_default;
     memories_load_startup(&tc_app);
-    // Always boot into Compose
-    tc_app.mode = TOUCHORD_COMPOSE;
+    // Boot into the mode that was saved, but never into Settings
+    if (tc_app.mode >= TOUCHORD_SETTINGS) tc_app.mode = TOUCHORD_COMPOSE;
+    prevMode = tc_app.mode;
 
     tc_sync_init();
     sched_init();
     reload_custom_scales();
-    compose_start();
+    start_mode(tc_app.mode);
 
     midi_out_init();
     multicore_launch_core1(io_task);
