@@ -9,30 +9,59 @@ It's just a prototype. Thanks
 
 ![Internal](https://github.com/nlpeeee/TCw/blob/main/img/internal.jpeg)
 
-## What TCw adds to Touchord
+## Changes over upstream Touchord
 
-TCw tracks [dovker/Touchord](https://github.com/dovker/Touchord) (currently v1.0.0) and adds:
+TCw tracks [dovker/Touchord](https://github.com/dovker/Touchord) (currently v1.0.0). Everything below is new in TCw, most important first. [CHANGELOG.md](CHANGELOG.md) has the line-by-line list.
 
-- **Raspberry Pi Pico 2 W support.** The build targets `pico2_w` by default. GPIO25 is the radio's chip select on the W boards, so the status LED is driven through the radio instead.
+### Major features
+
 - **Bluetooth LE MIDI.** Touchord shows up as a Bluetooth MIDI device called **Touchord** on macOS, iOS, Windows (MIDI apps with BLE support) and Android. It pairs with "Just Works" pairing and remembers the host. USB MIDI and TRS MIDI keep working alongside it.
   - Keys play whenever USB *or* Bluetooth is connected, so it can run from a battery or USB power bank.
-  - **Settings > MIDI > Bluetooth** turns Bluetooth MIDI on or off. The LED blinks slowly while USB or Bluetooth is connected.
+  - **Settings > MIDI > Bluetooth** turns Bluetooth MIDI on or off and shows its status. The LED blinks slowly while USB or Bluetooth is connected.
   - "BT Connected" / "BT Disconnected" pops up on screen when a host connects or drops.
+  - On iOS, connect from inside a MIDI app (GarageBand, midimittr); iOS Settings never lists BLE MIDI devices.
+- **Raspberry Pi Pico 2 W support.** The build targets `pico2_w` by default. GPIO25 is the radio's chip select on the W boards, so the status LED is driven through the radio instead. A `Touchord-single.uf2` build suits the TCw wiring (see [Building](#building)).
+- **Chord sets, key and size by hold-and-slide.** Hold a button and slide along the touch bar; a panel shows the choice and a short preview chord plays.
+  - **Hold B5 + slide: key.** 12 zones, C to B.
+  - **Hold B4 + slide: chord set.** Ten ready-made sets of 7 chords: Dark 1-4, Warm 1-4 and Bright 1-2. Out of the box it plays Bright 1 in C (C F G Am Dm Em Gsus4). The panel shows a loop to try on the keys.
+  - **Hold B3 + slide: size.** Simple, Rich or Lush (3, 4 or 5 notes per chord).
+  - The sets are also under **Settings > Chords**.
 - **Arp mode** (B0 from Compose). Hold a key and its chord plays one note at a time.
   - Touch bar in 8 parts: six rates, fastest (1/32) at the far end down to 1/4, then the two parts nearest you together: each tap steps the range through 1-4 octaves.
-  - Latch is on by default: the arp keeps going after you let go, another key changes chord, and the same key again stops it. Turn it off under Settings > Modes > Arp.
+  - Latch is on by default: the arp keeps going after you let go, another key changes chord, and the same key again stops it. Turn it off under **Settings > Modes > Arp**.
   - Hold B1 and slide to pick the pattern: Up, Down, Up-Down, Random, Chord.
   - Pattern, rate, range, gate, tempo and latch are also under **Settings > Modes > Arp**.
+- **It remembers, and has song memories.** The setup you are playing is saved by itself a few seconds after you stop changing it (only while nothing is playing), in its own flash sector, and comes back at power-on, mode included. Hold B0 and tap a green key to switch to memory 1-7; keep the key held for 2 seconds to save the current setup there instead. Memories are preset slots 1-7, and MIDI and Bluetooth settings stay as they are when you switch. Out of the box each one holds a starter setup: 1 Compose · Bright 1, 2 Compose · Warm 3 rolled 9ths, 3 Arp · Dark 2, 4 Strum · Bright 2, 5 Omni · Warm 2, 6 Arp · Warm 1 up-down, 7 Perform · Dark 3 with bend.
 - **MIDI clock in** over USB or Bluetooth. The arp locks to the host's beat while it plays and uses its tempo while it is stopped; with no clock it uses the Arp Tempo setting. **Settings > MIDI > Clock In** shows the incoming tempo.
-- **Bass channel** (**Settings > MIDI > Bass**, Off by default). Compose and Arp send the chord root an octave down on that channel; Omni sends its root and fifth there.
-- **Pitch bend and pressure from the touch bar** in Perform: set **Settings > Modes > Perform > Pos Sends** or **Size Sends** to **Bend** or **Press** instead of CC. Bend follows your finger from wherever it lands (half the bar is a full bend); Press sends channel pressure from how firmly you press. Both return to rest when you lift.
-- **Compose Roll** (**Settings > Modes > Compose > Roll**) plays chords from the lowest note up, 10 to 80 ms apart.
-- **One rule for every white button: tap, or hold and slide on the bar.** Tap B0 for the next mode, B1/B2 for octave down/up (no more double-clicks, so taps don't wait). Hold one and slide to choose: **B0** a mode (it switches when you let go), **B1** the mode's playing style (Compose roll, Arp pattern, Perform's bar output, Strum and Omni span), **B2** touch (velocity, soft near you to hard at the far end), **B3** size, **B4** chord set, **B5** key. Hold **B1 + B2** together for a help screen. On the bar the far end is always more: higher, faster, brighter, harder.
+- **Quantize** (**Settings > MIDI > Quantize**: Off, 1/16, 1/8, 1/4 or 1 Bar; Off by default). Chord presses in Compose and Drum, and in Arp while a host clock runs, land on the grid. It follows the host clock while one is playing, otherwise the Arp Tempo. A press just after a grid line plays at once.
+
+### Playing and controls
+
+- **One rule for every white button: tap, or hold and slide on the bar.** Tap B0 for the next mode, B1/B2 for octave down/up (no more double-clicks, so taps don't wait). Hold one and slide to choose: **B0** a mode (it switches when you let go), **B1** the mode's playing style (Compose roll, Arp pattern, Perform's bar output, Strum and Omni span), **B2** touch (velocity, soft near you to hard at the far end), **B3** size, **B4** chord set, **B5** key. Hold **B0** alone for Settings. Hold **B1 + B2** together for a help screen. On the bar the far end is always more: higher, faster, brighter, harder.
 - **The 7 chords on screen.** Every chord mode shows a row of the 7 chords the green keys play, lined up with the keys, with the one you hold lit. Compose's bar labels say what they do: 6, 5 or 4 notes, or Flip (major and minor swapped).
-- **It remembers.** The setup you are playing is saved by itself a few seconds after you stop changing it (only while nothing is playing), in its own flash sector, and comes back at power-on, mode included.
-- **Song memories on the green keys.** Hold B0 and tap a green key to switch to memory 1-7; keep the key held for 2 seconds to save the current setup there instead. Memories are preset slots 1-7, and MIDI and Bluetooth settings stay as they are when you switch. Out of the box each one holds a starter setup: 1 Compose · Bright 1, 2 Compose · Warm 3 rolled 9ths, 3 Arp · Dark 2, 4 Strum · Bright 2, 5 Omni · Warm 2, 6 Arp · Warm 1 up-down, 7 Perform · Dark 3 with bend.
+- **Bass channel** (**Settings > MIDI > Bass**, Off by default). Compose and Arp send the chord root an octave down on that channel; Omni sends its root and fifth there.
+- **Pitch bend and pressure from the touch bar** in Perform: set **Settings > Modes > Perform > Pos Sends** or **Size Sends** to **Bend** or **Press** instead of CC. Bend follows your finger from wherever it lands (half the bar is a full bend); Press sends channel pressure from how firmly you press. Both return to rest when you lift. Values are only sent when they change.
+- **Compose Roll** (**Settings > Modes > Compose > Roll**, or hold B1 and slide) plays chords from the lowest note up, 10 to 80 ms apart.
 - **Sounds good by default.** Compose voice leading is on, chords stay in one register whatever the key (roots from F# below middle C up to F), chord modes keep to octaves 2-6, and B0 steps through Compose, Arp, Strum, Omni, Perform, Drum. Drum mode plays a General MIDI kit (kick, snare, clap, closed and open hat, tom, crash); hold B1 and slide to switch it to notes in a row, where B1/B2 change octave as before.
-- **Safer first run.** Until USB or Bluetooth connects, the screen says so instead of sitting on a silent play screen. Firmware mode (B0 + B2 + B4) needs a 3 second hold, and **Reset Factory** and **Firmware Update** ask for a second OK press. Preset slots are numbered from 1.
+- **More scales.** Harmonic minor, melodic minor, harmonic major, Phrygian dominant, Lydian dominant, Mixolydian b6, major pentatonic and minor pentatonic join the upstream modes and custom scales, under **Settings > Advanced**.
+
+### Saving and settings
+
+- **32 preset slots** instead of 8, in the same flash space. Slots are numbered from 1.
+- **Tidier Settings.** The top level is Modes, MIDI, Chords, Load, Save, Advanced and Firmware. Root, scale and the custom scales live under Advanced.
+
+### Safety and first run
+
+- Until USB or Bluetooth connects, the screen says so instead of sitting on a silent play screen. A short hint after connecting shows the hold-and-slide buttons.
+- Firmware mode (B0 + B2 + B4) needs a 3 second hold with a countdown, and **Reset Factory** and **Firmware Update** ask for a second OK press.
+
+### Builds and smaller changes
+
+- **Ready-made firmware.** GitHub Actions builds both `.uf2` files on every pull request and push. Each push to `main` updates the [latest](https://github.com/nlpeeee/TCw/releases/tag/latest) pre-release, and `v*` tags publish versioned releases.
+- `Touchord-single.uf2` reads the white buttons in reverse pin order, so B0 is the leftmost button on the TCw as on the Touchord.
+- Perform's "Pos Keep" / "Size Keep" are renamed "Pos Resets" / "Size Resets", which is what they do.
+- All MIDI output (USB, TRS and Bluetooth) goes through one queue sent from core 0, and outgoing MIDI bytes are clamped to valid values.
+- Bluetooth pairings are stored in flash just below the preset sectors, so saving presets and pairing never overwrite each other.
 
 ## Building
 
