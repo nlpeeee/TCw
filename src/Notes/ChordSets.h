@@ -18,6 +18,8 @@
 // SCALE_CHORD_SET; tc_app.chord_set picks which.
 #define CHORD_SET_COUNT   10
 #define CHORD_SET_DEFAULT 8     // Bright 1
+#define CHORD_SET_WARM_FIRST 4  // Warm 1
+#define CHORD_SET_WARM_LAST  7  // Warm 4
 
 typedef struct
 {
@@ -27,6 +29,8 @@ typedef struct
 
 extern const ChordSet chord_sets[CHORD_SET_COUNT];
 extern const char* const chord_set_names[CHORD_SET_COUNT];
+// An easy loop to try on each set, as key numbers.
+extern const char* const chord_set_loops[CHORD_SET_COUNT];
 
 // Copies the selected set into the SCALE_CHORD_SET rows of the scale tables.
 void load_chord_set(void);

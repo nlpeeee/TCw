@@ -145,9 +145,6 @@ void perform_button_down(uint8_t button)
         case 2:
         if(tc_app.octave < 7) tc_app.octave++;
         break;
-        case 3: tc_app.current_key = 0; break;
-        case 4: tc_app.current_key = 1; break;
-        case 5: tc_app.current_key = 2; break;
     }
 }
 

@@ -30,7 +30,6 @@ static const ModeHandlers omni_handlers = TC_MODE_HANDLERS(omni);
 void omni_start()
 {
     tc_bind_handlers(&omni_handlers);
-    tc_app.extension_count = 3;
     tc_trill_segs = tc_app.extension_count * tc_app.octave_count;
     tc_trill_show = true;
 }
@@ -42,7 +41,6 @@ void omni_end()
     send_midi_note(omni_bass_ch, NOTE_OFF, playingRoot,   tc_app.velocity);
     send_midi_note(omni_bass_ch, NOTE_OFF, playingFifth,  tc_app.velocity);
     tc_app.chord_name[0] = '\0';
-    tc_app.extension_count = DEFAULT_EXTENSIONS;
 }
 
 void omni_draw()
@@ -93,9 +91,6 @@ void omni_button_down(uint8_t button)
         case 0: tc_app_set_mode(TOUCHORD_DRUM); break;
         case 1: if (tc_app.octave > 1) tc_app.octave--; break;
         case 2: if (tc_app.octave < 7) tc_app.octave++; break;
-        case 3: tc_app.current_key = 0; break;
-        case 4: tc_app.current_key = 1; break;
-        case 5: tc_app.current_key = 2; break;
     }
 }
 

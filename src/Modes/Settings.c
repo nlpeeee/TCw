@@ -339,9 +339,6 @@ void settings_button_down(uint8_t button)
                 pop();
             }
         break;
-        case 3: tc_app.current_key = 0; break;
-        case 4: tc_app.current_key = 1; break;
-        case 5: tc_app.current_key = 2; break;
     }
 }
 

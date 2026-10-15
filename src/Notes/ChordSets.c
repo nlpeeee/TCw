@@ -55,6 +55,12 @@ const char* const chord_set_names[CHORD_SET_COUNT] = {
     "Bright 1", "Bright 2",
 };
 
+const char* const chord_set_loops[CHORD_SET_COUNT] = {
+    "1 3 1 2", "1 2 4 3", "1 2 3 4", "1 2 1 2",
+    "2 3 1 4 5", "2 3 4 5", "2 3 4 1", "1 2 3 1",
+    "2 3 4 1", "1 2 3 1",
+};
+
 static uint8_t current_set(void)
 {
     return tc_app.chord_set < CHORD_SET_COUNT ? tc_app.chord_set : CHORD_SET_DEFAULT;
