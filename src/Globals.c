@@ -109,6 +109,8 @@ TouchordMode tc_prev_mode = TOUCHORD_COMPOSE;
 bool tc_running = true;
 volatile bool tc_trigger_bootsel = false;
 volatile bool tc_connected = false;
+volatile bool tc_mode_restart = false;
+const char* const tc_mode_names[6] = { "Compose", "Arp", "Perform", "Strum", "Omni", "Drum" };
 
 TrillBar tc_bar;
 ssd1306_t tc_disp;

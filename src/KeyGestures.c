@@ -48,9 +48,7 @@ static const char* const size_names[SIZE_ZONES] = { "Simple", "Rich", "Lush" };
 
 // Play modes in B0's order; Settings is reached by holding B0 instead.
 #define MODE_ZONES 6
-static const char* const mode_names[MODE_ZONES] = {
-    "Compose", "Arp", "Perform", "Strum", "Omni", "Drum",
-};
+#define mode_names tc_mode_names
 // What the bar does in each mode, for the MODE panel and the help screen.
 static const char* const bar_names[MODE_ZONES] = {
     "Bar: changes the held chord",

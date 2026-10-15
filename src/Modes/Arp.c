@@ -261,6 +261,8 @@ void arp_button_down(uint8_t button)
 
 void arp_button_up(uint8_t button) {}
 
+bool arp_is_playing(void) { return active; }
+
 void arp_trill_down(float pos, float size)
 {
     int seg = segments(pos, ARP_TRILL_SEGS);

@@ -23,6 +23,7 @@
 #include "Timing/Scheduler.h"
 #include "Timing/MidiClock.h"
 #include "Data/Flash.h"
+#include "Data/Memories.h"
 #include "Notes/Note.h"
 #include "KeyGestures.h"
 #include "Sync.h"
@@ -109,6 +110,42 @@ static void poll_bootsel_combo(uint64_t now)
     }
 }
 
+// Hold B0 and tap a green key to recall that song memory; keep the key
+// held to save into it instead. These keys never reach the mode.
+static int8_t memory_key = -1;
+static uint64_t memory_key_time = 0;
+static bool memory_saved = false;
+
+static bool memory_key_down(int key, uint64_t now)
+{
+    if (memory_key >= 0) return true;   // a second key during one is ignored
+    if (tc_control_states[0] || tc_app_get_mode() == TOUCHORD_SETTINGS) return false;
+    tc_button_slid[0] = true;           // B0's tap and Settings hold are spent
+    memory_key = (int8_t)key;
+    memory_key_time = now;
+    memory_saved = false;
+    trigger_overlay("Hold to save", MEMORY_SAVE_HOLD_MS);
+    return true;
+}
+
+static bool memory_key_up(int key)
+{
+    if (memory_key < 0) return false;
+    if (key != memory_key) return true;
+    if (!memory_saved) memory_recall((uint8_t)key);
+    memory_key = -1;
+    return true;
+}
+
+static void memory_key_poll(uint64_t now)
+{
+    if (memory_key < 0 || memory_saved) return;
+    if (now - memory_key_time >= MEMORY_SAVE_HOLD_MS) {
+        memory_store((uint8_t)memory_key);
+        memory_saved = true;
+    }
+}
+
 void poll_buttons()
 {
     uint64_t now = to_ms_since_boot(get_absolute_time());
@@ -133,14 +170,19 @@ void poll_buttons()
     for (int i = 0; i < NUM_KEYS; i++) {
         bool curr_state = gpio_get(i + KEY_0);
         if (tc_key_states[i] && !curr_state) {
-            tc_key_down(i);
-            tc_last_key = i;
+            if (!memory_key_down(i, now)) {
+                tc_key_down(i);
+                tc_last_key = i;
+            }
         } else if (!tc_key_states[i] && curr_state) {
-            tc_key_up(i);
-            tc_key_up_independent(i);
+            if (!memory_key_up(i)) {
+                tc_key_up(i);
+                tc_key_up_independent(i);
+            }
         }
         tc_key_states[i] = curr_state;
     }
+    memory_key_poll(now);
 }
 
 void poll_trill_bar(TrillBar* bar)
@@ -267,6 +309,15 @@ void io_task()
         }
 
         TouchordMode currentMode = tc_app_get_mode();
+        if (tc_mode_restart) {
+            // A song memory swapped the setup: stop the old mode's notes and
+            // start the new one afresh, with a transition only if it changed.
+            tc_mode_restart = false;
+            if (currentMode == prevMode) {
+                select_mode(currentMode);
+                continue;
+            }
+        }
         if (currentMode != prevMode) {
             static uint8_t prev_fb[128 * 8];
             static uint8_t next_fb[128 * 8];
@@ -325,8 +376,7 @@ int main()
 
     tc_app = tc_app_default;
     tc_app_working = tc_app_default;
-    flash_load_preset(0, &tc_app);
-    use_single_key_slot(&tc_app);
+    memories_load_startup(&tc_app);
     // Always boot into Compose
     tc_app.mode = TOUCHORD_COMPOSE;
 
@@ -361,6 +411,7 @@ int main()
             next_button_poll = make_timeout_time_ms(BUTTON_POLL_MS);
         }
 
+        autosave_task();
         arp_task();
         sched_task();
         midi_out_task();

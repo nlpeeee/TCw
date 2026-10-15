@@ -14,6 +14,7 @@
 #include "Helper.h"
 #include "Sync.h"
 #include "Data/Flash.h"
+#include "Data/Memories.h"
 #include "IO/BleMidi.h"
 #include "Timing/MidiClock.h"
 #include "Compose.h"
@@ -85,6 +86,7 @@ void trigger_factory_reset(const DataU* data)
 
     reload_custom_scales();
     flash_clear_all_presets();
+    flash_clear_last();
     trigger_overlay("Factory Reset", 1000);
 }
 
@@ -112,10 +114,9 @@ void trigger_load_preset(const DataU* data)
 {
     TouchordSettings temp;
     char msg[24];
-    if (flash_load_preset(preset_slot_load, &temp)) {
+    if (memory_load(preset_slot_load, &temp)) {
         tc_app = temp;
         tc_app.mode = TOUCHORD_COMPOSE;
-        use_single_key_slot(&tc_app);
         reload_custom_scales();
         snprintf(msg, sizeof msg, "Preset %u Loaded", (unsigned)preset_slot_load + 1);
         trigger_overlay(msg, 800);
@@ -275,12 +276,11 @@ void settings_draw()
         case UI_INT:
             if (cn->data.i_val == &preset_slot_load || cn->data.i_val == &preset_slot_save)
             {
-                // Numbered from 1; slot 1 is the one loaded at power-on.
+                // Numbered from 1; empty slots 1-7 hold the starter setups.
                 uint8_t slot = *cn->data.i_val;
                 draw_int_center(slot + 1);
-                bool saved = flash_preset_exists(slot);
-                const char* status = slot == 0 ? (saved ? "Start-up: Saved" : "Start-up: Empty")
-                                               : (saved ? "Saved" : "Empty");
+                const char* status = flash_preset_exists(slot) ? "Saved"
+                                   : slot < MEMORY_COUNT ? "Starter" : "Empty";
                 ssd1306_draw_string(&tc_disp, 64 - (strlen(status) * 6) / 2, 44, 1, status);
             }
             else if(cn->data.i_val)

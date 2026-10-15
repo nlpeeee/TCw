@@ -23,6 +23,16 @@ _Static_assert(PICO_FLASH_BANK_STORAGE_OFFSET + PICO_FLASH_BANK_TOTAL_SIZE <= FL
                "Bluetooth pairing storage overlaps the preset sectors");
 #endif
 
+// One more sector, below the Bluetooth bank, keeps the last setup. Each save
+// takes the next free page, so the sector is only erased every 16 saves and
+// the sectors holding the saved presets are never touched.
+#define FLASH_LAST_OFFSET (PICO_FLASH_SIZE_BYTES - (FLASH_SECTOR_SIZE * 5))
+#define FLASH_LAST_PAGES  (FLASH_SECTOR_SIZE / FLASH_PAGE_SIZE)
+#if TOUCHORD_BLE
+_Static_assert(FLASH_LAST_OFFSET + FLASH_SECTOR_SIZE <= PICO_FLASH_BANK_STORAGE_OFFSET,
+               "Last-setup sector overlaps the Bluetooth pairing storage");
+#endif
+
 static const uint8_t* flash_preset_base(void)
 {
     return (const uint8_t*)(XIP_BASE + FLASH_TARGET_OFFSET);
@@ -104,4 +114,72 @@ bool flash_save_preset(uint8_t slot, const TouchordSettings* settings)
     restore_interrupts(ints);
 
     return true;
+}
+
+static const TouchordSettings* last_page(int page)
+{
+    return (const TouchordSettings*)(XIP_BASE + FLASH_LAST_OFFSET + page * FLASH_PAGE_SIZE);
+}
+
+// Newest written page in the last-setup sector, or -1 when it is empty.
+static int last_newest(void)
+{
+    int newest = -1;
+    for (int p = 0; p < FLASH_LAST_PAGES; p++)
+        if (last_page(p)->magic == SETTINGS_MAGIC) newest = p;
+    return newest;
+}
+
+bool flash_load_last(TouchordSettings* settings)
+{
+    int p = last_newest();
+    if (p < 0) return false;
+    const TouchordSettings* stored = last_page(p);
+    if (stored->schema_version > SETTINGS_SCHEMA_VERSION) return false;
+
+    uint16_t stored_size = stored->struct_size;
+    if (stored_size == 0 || stored_size > sizeof(TouchordSettings))
+        stored_size = sizeof(TouchordSettings);
+    *settings = tc_app_default;
+    memcpy(settings, stored, stored_size);
+    settings->schema_version = SETTINGS_SCHEMA_VERSION;
+    settings->struct_size    = sizeof(TouchordSettings);
+    return true;
+}
+
+void flash_save_last(const TouchordSettings* settings)
+{
+    static uint8_t page_buffer[FLASH_PAGE_SIZE];
+    memset(page_buffer, 0xFF, sizeof page_buffer);
+    memcpy(page_buffer, settings, sizeof(TouchordSettings));
+    TouchordSettings *stamped = (TouchordSettings *)page_buffer;
+    stamped->magic          = SETTINGS_MAGIC;
+    stamped->schema_version = SETTINGS_SCHEMA_VERSION;
+    stamped->struct_size    = sizeof(TouchordSettings);
+
+    int next = last_newest() + 1;
+    // A page left half-written by a power cut can't be programmed over.
+    if (next < FLASH_LAST_PAGES) {
+        const uint8_t* page = (const uint8_t*)last_page(next);
+        for (int i = 0; i < FLASH_PAGE_SIZE; i++)
+            if (page[i] != 0xFF) { next = FLASH_LAST_PAGES; break; }
+    }
+    uint32_t ints = save_and_disable_interrupts();
+    multicore_lockout_start_blocking();
+    if (next >= FLASH_LAST_PAGES) {
+        flash_range_erase(FLASH_LAST_OFFSET, FLASH_SECTOR_SIZE);
+        next = 0;
+    }
+    flash_range_program(FLASH_LAST_OFFSET + next * FLASH_PAGE_SIZE, page_buffer, FLASH_PAGE_SIZE);
+    multicore_lockout_end_blocking();
+    restore_interrupts(ints);
+}
+
+void flash_clear_last(void)
+{
+    uint32_t ints = save_and_disable_interrupts();
+    multicore_lockout_start_blocking();
+    flash_range_erase(FLASH_LAST_OFFSET, FLASH_SECTOR_SIZE);
+    multicore_lockout_end_blocking();
+    restore_interrupts(ints);
 }
