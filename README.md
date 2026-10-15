@@ -27,6 +27,7 @@ TCw tracks [dovker/Touchord](https://github.com/dovker/Touchord) (currently v1.0
 - **Bass channel** (**Settings > MIDI > Bass**, Off by default). Compose and Arp send the chord root an octave down on that channel; Omni sends its root and fifth there.
 - **Pitch bend and pressure from the touch bar** in Perform: set **Settings > Modes > Perform > Pos Sends** or **Size Sends** to **Bend** or **Press** instead of CC. Bend follows your finger from wherever it lands (half the bar is a full bend); Press sends channel pressure from how firmly you press. Both return to rest when you lift.
 - **Compose Roll** (**Settings > Modes > Compose > Roll**) plays chords from the lowest note up, 10 to 80 ms apart.
+- **Safer first run.** Until USB or Bluetooth connects, the screen says so instead of sitting on a silent play screen. Firmware mode (B0 + B2 + B4) needs a 3 second hold, and **Reset Factory** and **Firmware Update** ask for a second OK press. Preset slots are numbered from 1; slot 1 is the one loaded at power-on.
 
 ## Building
 
@@ -34,10 +35,10 @@ Same as upstream (Pico SDK 2.2.0, VS Code Pico extension or plain CMake). Two fi
 
 | File | Wiring |
 | --- | --- |
-| `Touchord-single.uf2` | Trill bar and screen share I2C0 on GPIO16/17. **This is the TCw prototype wiring.** |
+| `Touchord-single.uf2` | Trill bar and screen share I2C0 on GPIO16/17, and the white buttons run B0 = GPIO6 to B5 = GPIO1 so B0 is on the left. **This is the TCw prototype wiring.** |
 | `Touchord-dual.uf2` | Trill bar on I2C0 (GPIO16/17), screen on I2C1 (GPIO14/15), as on the Touchord PCB. |
 
-Hold the first control button while plugging in, or press buttons 1 + 3 + 5 together, to get into BOOTSEL, then copy the `.uf2` across.
+Hold B0 (the leftmost white button) while plugging in, or hold buttons 1 + 3 + 5 together for 3 seconds (the screen counts down), to get into BOOTSEL, then copy the `.uf2` across.
 
 To build for a plain Pico 2 without Bluetooth: `cmake -DPICO_BOARD=pico2 ...`.
 

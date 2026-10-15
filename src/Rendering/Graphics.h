@@ -45,6 +45,8 @@ void draw_trill_indicator(void);
 
 // Centered notification overlay (preset loads, factory reset, etc.).
 void trigger_overlay(const char *msg, uint32_t ms);
+// Shown until USB or Bluetooth connects, since keys don't play before that.
+void draw_connect_screen(bool bluetooth);
 void draw_overlay(void);
 
 // 8x8 monochrome icons (musical/UI glyphs).

@@ -51,13 +51,33 @@ uint8_t pop(void) {
     return cur;
 }
 
+#define CONFIRM_MS 3000
+
+// A first press of OK only asks; a second one within CONFIRM_MS goes ahead.
+static bool confirmed(const void* what)
+{
+    static const void* armed = NULL;
+    static uint32_t armed_at = 0;
+    uint32_t now = to_ms_since_boot(get_absolute_time());
+    if (armed == what && now - armed_at < CONFIRM_MS) {
+        armed = NULL;
+        return true;
+    }
+    armed = what;
+    armed_at = now;
+    trigger_overlay("Press OK again", CONFIRM_MS);
+    return false;
+}
+
 void trigger_boot_sel(const DataU* data)
 {
+    if (!confirmed(trigger_boot_sel)) return;
     tc_trigger_bootsel = true;
 }
 
 void trigger_factory_reset(const DataU* data)
 {
+    if (!confirmed(trigger_factory_reset)) return;
     critical_section_enter_blocking(&tc_app_lock);
     tc_app         = tc_app_default;
     tc_app_working = tc_app_default;
@@ -97,10 +117,10 @@ void trigger_load_preset(const DataU* data)
         tc_app.mode = TOUCHORD_COMPOSE;
         use_single_key_slot(&tc_app);
         reload_custom_scales();
-        snprintf(msg, sizeof msg, "Preset %u Loaded", (unsigned)preset_slot_load);
+        snprintf(msg, sizeof msg, "Preset %u Loaded", (unsigned)preset_slot_load + 1);
         trigger_overlay(msg, 800);
     } else {
-        snprintf(msg, sizeof msg, "Slot %u Empty", (unsigned)preset_slot_load);
+        snprintf(msg, sizeof msg, "Slot %u Empty", (unsigned)preset_slot_load + 1);
         trigger_overlay(msg, 1000);
     }
 }
@@ -109,7 +129,7 @@ void trigger_save_preset(const DataU* data)
 {
     char msg[24];
     if (flash_save_preset(preset_slot_save, &tc_app))
-        snprintf(msg, sizeof msg, "Preset %u Saved", (unsigned)preset_slot_save);
+        snprintf(msg, sizeof msg, "Preset %u Saved", (unsigned)preset_slot_save + 1);
     else
         snprintf(msg, sizeof msg, "Save Failed");
     trigger_overlay(msg, 800);
@@ -157,8 +177,8 @@ UINode tree[MAX_UI_NODES] = {
     {"Size CC", UI_INT, 128, 0, NULL, {.i_val=&tc_app.perform_size_cc}, NULL},
     {"Pos Default", UI_INT, 128, 0, NULL, {.i_val=&tc_app.perform_pos_default}, NULL},
     {"Size Default", UI_INT, 128, 0, NULL, {.i_val=&tc_app.perform_size_default}, NULL},
-    {"Pos Keep", UI_TOGGLE, 2, 0, NULL, {.toggle=&tc_app.perform_reset_pos_on_lift}, on_off_sel},
-    {"Size Keep", UI_TOGGLE, 2, 0, NULL, {.toggle=&tc_app.perform_reset_size_on_lift}, on_off_sel},
+    {"Pos Resets", UI_TOGGLE, 2, 0, NULL, {.toggle=&tc_app.perform_reset_pos_on_lift}, on_off_sel},
+    {"Size Resets", UI_TOGGLE, 2, 0, NULL, {.toggle=&tc_app.perform_reset_size_on_lift}, on_off_sel},
 
     // 23-28: Modes.Arp Settings
     {"Pattern", UI_ENUM,   ARP_PATTERN_COUNT, 0, NULL, {.en_val=&tc_app.arp_pattern}, arp_pattern_names},
@@ -253,13 +273,18 @@ void settings_draw()
                 draw_string_center(cn->opts[*cn->data.en_val]);
         break;
         case UI_INT:
-            if(cn->data.i_val)
-                draw_int_center(*cn->data.i_val);
             if (cn->data.i_val == &preset_slot_load || cn->data.i_val == &preset_slot_save)
             {
-                const char* status = flash_preset_exists(*cn->data.i_val) ? "Saved" : "Empty";
+                // Numbered from 1; slot 1 is the one loaded at power-on.
+                uint8_t slot = *cn->data.i_val;
+                draw_int_center(slot + 1);
+                bool saved = flash_preset_exists(slot);
+                const char* status = slot == 0 ? (saved ? "Start-up: Saved" : "Start-up: Empty")
+                                               : (saved ? "Saved" : "Empty");
                 ssd1306_draw_string(&tc_disp, 64 - (strlen(status) * 6) / 2, 44, 1, status);
             }
+            else if(cn->data.i_val)
+                draw_int_center(*cn->data.i_val);
         break;
         case UI_TOGGLE:
             if (cn->data.toggle)

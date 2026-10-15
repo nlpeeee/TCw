@@ -62,6 +62,12 @@
 #define CONTROL_4 5
 #define CONTROL_5 6
 #define NUM_CONTROLS 6
+/* The TCw prototype (single-bus build) has B0 wired to GPIO6 and B5 to GPIO1,
+ * the reverse of the Touchord PCB, so B0 is still the leftmost button. */
+#ifndef TOUCHORD_CONTROLS_REVERSED
+#define TOUCHORD_CONTROLS_REVERSED (!TOUCHORD_DUAL_I2C)
+#endif
+#define CONTROL_PIN(i) (TOUCHORD_CONTROLS_REVERSED ? CONTROL_5 - (i) : CONTROL_0 + (i))
 #define KEY_0 7
 #define KEY_1 8
 #define KEY_2 9

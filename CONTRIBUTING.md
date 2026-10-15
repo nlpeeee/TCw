@@ -240,7 +240,7 @@ the chip will NACK or return garbage.
 works. `printf("trill_pos=%f\n", pos);` in the loop, then re-flash and
 attach `screen /dev/cu.usbmodem* 115200` (or any serial monitor).
 
-**Boot hang / locked up.** B0 + B2 + B4 simultaneously forces BOOTSEL
+**Boot hang / locked up.** Holding B0 + B2 + B4 for 3 seconds forces BOOTSEL
 (RPI-RP2 drive appears). Holding B0 at power-on does the same. If
 neither works the unit is stuck before `poll_buttons` runs — probe
 `main()` and the early init.

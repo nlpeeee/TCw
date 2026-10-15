@@ -227,6 +227,30 @@ void trigger_overlay(const char *msg, uint32_t ms)
     tc_overlay_dur_ms   = ms;
 }
 
+static void draw_centered(int y, const char *str)
+{
+    int w = (int)strlen(str) * 6 - 1;
+    ssd1306_draw_string(&tc_disp, (128 - w) / 2, y, 1, str);
+}
+
+void draw_connect_screen(bool bluetooth)
+{
+    const char *title = "Touchord";
+    ssd1306_draw_string(&tc_disp, (128 - 8 * 12) / 2, 2, 2, title);
+    ssd1306_draw_line(&tc_disp, 0, 20, 127, 20);
+    if (bluetooth) {
+        draw_centered(25, "Connect USB or");
+        draw_centered(35, "Bluetooth \"Touchord\"");
+    } else {
+        draw_centered(30, "Connect USB");
+    }
+    ssd1306_draw_line(&tc_disp, 0, 47, 127, 47);
+    const char *hint = "Keys play once connected";
+    int adv = font_3x6[1] + font_3x6[2];
+    int hw  = (int)strlen(hint) * adv - font_3x6[2];
+    ssd1306_draw_string_with_font(&tc_disp, (128 - hw) / 2, 53, 1, font_3x6, hint);
+}
+
 void draw_settings_footer(void)
 {
     ssd1306_draw_line(&tc_disp, 0, 54, 127, 54);
