@@ -12,7 +12,6 @@ Press a button, slide a finger along the touch bar, and a full chord comes out t
 - 🔌 **Plays anything.** Connects to any synth, DAW or phone over USB, Bluetooth or MIDI.
 - 🛠️ **Open and hackable.** Built on the open-source [Touchord](https://github.com/dovker/Touchord) and runs on a Raspberry Pi Pico 2W.
 
-> This is a prototype build, so expect rough edges. Thanks for trying it!
 
 ![External](https://github.com/nlpeeee/TCw/blob/main/img/external.jpeg)
 
