@@ -16,6 +16,7 @@
 #include "Notes/Note.h"
 #include "Notes/ChordSets.h"
 #include "Modes/Arp.h"
+#include "Timing/Looper.h"
 #include "Rendering/Graphics.h"
 #include "pico/critical_section.h"
 #include <stdio.h>
@@ -83,11 +84,24 @@ void memory_describe(const TouchordSettings* s, char* out, int len)
     snprintf(out, len, "%s %s", tc_mode_names[m], chords);
 }
 
+// A memory's loop: saved with it, else the starter's demo loop for a memory
+// never saved, else none.
+static void memory_loop(uint8_t slot, LoopData* out)
+{
+    if (flash_load_loop(slot, out)) return;
+    if (slot < MEMORY_COUNT && !flash_preset_exists(slot)) looper_demo(slot, out);
+    else memset(out, 0, sizeof *out);
+}
+
 void memory_recall(uint8_t slot)
 {
     TouchordSettings next;
     char msg[24], what[20];
     if (!memory_load(slot, &next)) return;
+
+    LoopData loop;
+    memory_loop(slot, &loop);
+    looper_set(&loop);
 
     critical_section_enter_blocking(&tc_app_lock);
     // A memory is a song, not a setup of the rig: MIDI and Bluetooth stay.
@@ -117,7 +131,13 @@ void memory_store(uint8_t slot)
     critical_section_enter_blocking(&tc_app_lock);
     copy = tc_app;
     critical_section_exit(&tc_app_lock);
-    if (flash_save_preset(slot, &copy))
+    bool ok = flash_save_preset(slot, &copy);
+    if (ok) {
+        LoopData loop;
+        looper_get(&loop);
+        flash_save_loop(slot, &loop);
+    }
+    if (ok)
         snprintf(msg, sizeof msg, "Saved to %u", (unsigned)slot + 1);
     else
         snprintf(msg, sizeof msg, "Save Failed");
@@ -127,9 +147,19 @@ void memory_store(uint8_t slot)
 void memories_load_startup(TouchordSettings* out)
 {
     *out = tc_app_default;
-    if (!flash_load_last(out) && !flash_load_preset(0, out))
+    bool played_before = flash_load_last(out);
+    if (!played_before && !flash_load_preset(0, out))
         starter(0, out);
     use_single_key_slot(out);
+
+    // The loop as it was last played. A first start gets memory 1's.
+    LoopData loop;
+    if (!flash_load_loop(LOOP_SLOT_LIVE, &loop)) {
+        if (played_before) memset(&loop, 0, sizeof loop);
+        else               memory_loop(0, &loop);
+    }
+    looper_set(&loop);
+    looper_mark_saved();
 }
 
 // The parts of the settings that make up the setup, without what is
@@ -148,7 +178,7 @@ static void setup_only(TouchordSettings* s)
 // until nothing is being played.
 static bool idle(void)
 {
-    if (tc_touch_state || arp_is_playing()) return false;
+    if (tc_touch_state || arp_is_playing() || looper_is_busy()) return false;
     for (int i = 0; i < NUM_KEYS; i++)     if (!tc_key_states[i])     return false;
     for (int i = 0; i < NUM_CONTROLS; i++) if (!tc_control_states[i]) return false;
     return tc_app_get_mode() != TOUCHORD_SETTINGS;
@@ -183,5 +213,11 @@ void autosave_task(void)
         && now - changed_at >= AUTOSAVE_QUIET_MS && idle()) {
         flash_save_last(&seen);
         saved = seen;
+    }
+    if (looper_dirty() && now - looper_changed_ms() >= AUTOSAVE_QUIET_MS && idle()) {
+        LoopData loop;
+        looper_get(&loop);
+        flash_save_loop(LOOP_SLOT_LIVE, &loop);
+        looper_mark_saved();
     }
 }

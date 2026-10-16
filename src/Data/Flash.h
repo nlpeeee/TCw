@@ -16,6 +16,7 @@
 #include <stdbool.h>
 #include "Types.h"
 #include "Globals.h"
+#include "Timing/Looper.h"
 
 #define FLASH_PRESET_COUNT 32
 
@@ -35,5 +36,11 @@ void flash_clear_all_presets(void);
 bool flash_load_last(TouchordSettings* settings);
 void flash_save_last(const TouchordSettings* settings);
 void flash_clear_last(void);
+
+// Loops: slots 0-6 are the song memories, LOOP_SLOT_LIVE the setup being played.
+// A saved empty loop (length 0) still counts as saved.
+bool flash_load_loop(uint8_t slot, LoopData* out);
+void flash_save_loop(uint8_t slot, const LoopData* loop);
+void flash_clear_loops(void);
 
 #endif

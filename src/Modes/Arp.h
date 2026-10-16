@@ -40,6 +40,8 @@ void arp_trill_up();
 
 // True while the arp is stepping, latched or held.
 bool arp_is_playing(void);
+// Core 0: stop a latched arp (the looper stopping).
+void arp_stop(void);
 
 // Core 0 main loop: play the next step when it is due.
 void arp_task(void);

@@ -26,6 +26,7 @@
 #include "IO/BleMidi.h"
 #include "Timing/Scheduler.h"
 #include "Timing/MidiClock.h"
+#include "Timing/Looper.h"
 #include "Data/Flash.h"
 #include "Data/Memories.h"
 #include "Notes/Note.h"
@@ -150,12 +151,67 @@ static void memory_key_poll(uint64_t now)
     }
 }
 
+// Tap B4 to record, loop, stop and play again; hold it to clear the loop.
+// A hold that touches the bar picks a chord set instead and does neither,
+// and so does a press held past the tap time.
+#define B4_TAP_MS        600
+#define LOOP_CLEAR_HOLD_MS 2000
+static uint64_t b4_down_time = 0;
+static bool b4_spent = false;
+static int  b4_shown = -1;
+
+static void poll_b4(bool was_up, bool is_up, uint64_t now)
+{
+    if (was_up && !is_up) {
+        b4_down_time = now;
+        b4_shown = -1;
+        // Not as part of another button's hold, or in Settings.
+        b4_spent = tc_app_get_mode() == TOUCHORD_SETTINGS;
+        for (int i = 0; i < NUM_CONTROLS; i++)
+            if (i != 4 && !tc_control_states[i]) b4_spent = true;
+        return;
+    }
+    if (!was_up && is_up) {
+        if (b4_shown >= 0) trigger_overlay("", 0);
+        if (!b4_spent && !tc_button_slid[4] && now - b4_down_time < B4_TAP_MS)
+            looper_tap();
+        return;
+    }
+    if (is_up || b4_spent) return;
+    if (tc_button_slid[4]) {
+        // Picking a chord set after all: drop the countdown.
+        if (b4_shown >= 0) trigger_overlay("", 0);
+        b4_shown = -1;
+        return;
+    }
+    for (int i = 0; i < NUM_CONTROLS; i++)
+        if (i != 4 && !tc_control_states[i]) { b4_spent = true; return; }   // e.g. the BOOTSEL hold
+    if (!looper_has_loop()) return;
+
+    uint64_t held = now - b4_down_time;
+    if (held < B4_TAP_MS) return;
+    if (held >= LOOP_CLEAR_HOLD_MS) {
+        looper_clear();
+        b4_spent = true;
+        trigger_overlay("Loop cleared", 1000);
+        return;
+    }
+    int left = (int)((LOOP_CLEAR_HOLD_MS - held + 999) / 1000);
+    if (left != b4_shown) {
+        char msg[24];
+        snprintf(msg, sizeof msg, "Clear loop in %d", left);
+        trigger_overlay(msg, 1100);
+        b4_shown = left;
+    }
+}
+
 void poll_buttons()
 {
     uint64_t now = to_ms_since_boot(get_absolute_time());
 
     for (int i = 0; i < NUM_CONTROLS; i++) {
         bool curr_state = gpio_get(CONTROL_PIN(i));
+        if (i == 4) poll_b4(tc_control_states[4], curr_state, now);
         if (i == 0) {
             poll_b0(curr_state, now);
         } else if (tc_control_states[i] && !curr_state) {
@@ -356,6 +412,7 @@ void io_task()
         }
         tc_draw();
         tc_update();
+        looper_draw_badge();
         draw_trill_indicator();
         key_gesture_draw();
         key_gesture_draw_hint();
@@ -423,6 +480,7 @@ int main()
 
         autosave_task();
         quant_task();
+        looper_task();
         arp_task();
         sched_task();
         midi_out_task();

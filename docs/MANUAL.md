@@ -45,7 +45,7 @@ A slide only counts when your finger lands on the bar after you are already hold
 
 ## The white buttons
 
-Every white button follows one rule: **tap** it for a quick action, or **hold it and slide** on the bar to choose. B3, B4 and B5 have no tap action.
+Every white button follows one rule: **tap** it for a quick action, or **hold it and slide** on the bar to choose. B3 and B5 have no tap action.
 
 | Button | Tap | Hold + slide on the bar |
 | --- | --- | --- |
@@ -53,7 +53,7 @@ Every white button follows one rule: **tap** it for a quick action, or **hold it
 | B1 | Octave down | Play style for this mode |
 | B2 | Octave up | Touch: how hard notes play (near soft, far hard, 40 to 127) |
 | B3 | nothing | Size |
-| B4 | nothing | Chord set |
+| B4 | Looper: record, loop, stop, play (see Looper) | Chord set |
 | B5 | nothing | Key |
 
 Other combinations:
@@ -92,7 +92,26 @@ Notes for each mode:
 
 - **Arp** follows MIDI clock from your computer when it is playing; otherwise it uses the Tempo in Settings (120 BPM out of the box). Latch is on, so the arp keeps going after you let go.
 - **Strum and Omni**: hold B1 and slide to set how many octaves the bar covers.
-- **Drum**: B3, B4, B5 and B2 hold do nothing, since drums have no key or chords. Hold B1 and slide to switch to Notes, where the keys play a row of notes and B1/B2 change octave.
+- **Drum**: holding B3, B4, B5 or B2 does nothing (a tap of B4 still runs the looper), since drums have no key or chords. Hold B1 and slide to switch to Notes, where the keys play a row of notes and B1/B2 change octave.
+
+## Looper
+
+Tap **B4** to record a chord progression, and tap it again to loop it. The loop plays the green keys for you while you strum, arp, bend or switch modes on top.
+
+1. **Tap B4.** REC blinks at the bottom right. Nothing records yet, so take your time; tap B4 again to cancel.
+2. **Play your chords.** Recording starts on your first green key. The screen shows REC and the bar you are on.
+3. **Tap B4** to close the loop. It carries straight on playing from the top, and the screen shows which bar of the loop is playing (for example >2/4).
+4. **Tap B4** to stop (LOOP stays on screen), and tap again to play it from the top.
+5. **Hold B4** for 2 seconds, without touching the bar, to clear the loop. The screen counts down.
+
+How it behaves:
+
+- The loop records **which green keys you pressed and when**, not notes. Changing key (hold B5), chord set (hold B4 + slide), size (hold B3) or mode (B0) while it plays changes what it plays. Record in Compose, then switch to Arp, Strum or Omni and play over your own progression.
+- The bar is never recorded; it stays live, so strumming, arp speed and bend are played fresh every time round.
+- Pressing a green key while the loop plays takes over until you let go; the loop then picks up at its next chord.
+- Length: with Quantize on, or while your computer sends clock, the loop rounds to whole bars (1 to 8) and lines up with the beat; a Start from your computer takes it back to its top. With Quantize off and no clock, the loop is exactly as long as you played it. Up to 8 bars and about 30 chord changes.
+- With no clock coming in, the loop keeps time with the Arp Tempo, so changing the tempo speeds it up or slows it down.
+- B4 only counts as a tap when you let go quickly without touching the bar. Holding B4 to pick a chord set never starts the looper.
 
 ## Song memories and autosave
 
@@ -102,6 +121,8 @@ The seven green keys also hold seven **song memories**, so you can jump between 
 
 - **Recall:** hold B0 and tap a green key. The screen shows the memory number, mode and chord set.
 - **Save:** hold B0 and keep the green key held for 2 seconds, until "Saved to" appears.
+
+The loop is saved and recalled with the memory, and the autosave keeps it too. A recalled loop waits stopped: tap B4 to hear it. Each starter memory comes with a four-bar demo loop of its chord set.
 
 Switching memories keeps your MIDI, Bluetooth, clock and bass settings, since those belong to your rig, not the song. Until you save over them, the memories hold starter setups:
 
@@ -157,5 +178,6 @@ Hold B0 alone to open Settings. Inside, the buttons change meaning, as the botto
 | The arp won't stop | Latch is on: press the same green key again |
 | Strum mode is silent when I press a key | That's normal: in Strum the key picks the chord and the bar plays it |
 | Presses feel late | Quantize is on (Q shows at the bottom left). Turn it Off in Settings > MIDI |
-| I want the factory setup back | Settings > Firmware > Reset Factory, then OK twice. This also clears saved memories |
+| I want the factory setup back | Settings > Firmware > Reset Factory, then OK twice. This also clears saved memories and loops |
+| Tapping B4 plays a loop I didn't record | It's the memory's demo loop or your last loop. Hold B4 for 2 seconds to clear it, then tap to record |
 | Updating the firmware | Hold B0 + B2 + B4 for 3 seconds, or hold B0 while plugging in. Copy the .uf2 file to the drive that appears |

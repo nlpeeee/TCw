@@ -186,3 +186,98 @@ void flash_clear_last(void)
     multicore_lockout_end_blocking();
     restore_interrupts(ints);
 }
+
+// Loops live in their own sector below the last-setup one: one page per
+// save, slots 0-6 for the memories and LOOP_SLOT_LIVE for the setup being
+// played. The newest page for a slot wins. When the sector is full, the
+// newest page of each slot is copied back after the erase.
+#define FLASH_LOOP_OFFSET (PICO_FLASH_SIZE_BYTES - (FLASH_SECTOR_SIZE * 6))
+#define FLASH_LOOP_PAGES  (FLASH_SECTOR_SIZE / FLASH_PAGE_SIZE)
+#define FLASH_LOOP_SLOTS  (LOOP_SLOT_LIVE + 1)
+#define LOOP_MAGIC        0x4C4F4F50u   // "LOOP"
+_Static_assert(FLASH_LOOP_OFFSET + FLASH_SECTOR_SIZE <= FLASH_LAST_OFFSET,
+               "Loop sector overlaps the last-setup sector");
+
+typedef struct {
+    uint32_t magic;
+    uint8_t  slot;
+    uint8_t  reserved[3];
+    LoopData loop;
+} LoopPage;
+_Static_assert(sizeof(LoopPage) <= FLASH_PAGE_SIZE, "LoopPage exceeds flash page size");
+
+static const LoopPage* loop_page(int page)
+{
+    return (const LoopPage*)(XIP_BASE + FLASH_LOOP_OFFSET + page * FLASH_PAGE_SIZE);
+}
+
+static bool page_blank(int page)
+{
+    const uint8_t* p = (const uint8_t*)loop_page(page);
+    for (int i = 0; i < FLASH_PAGE_SIZE; i++) if (p[i] != 0xFF) return false;
+    return true;
+}
+
+// Newest page holding this slot, or -1.
+static int loop_newest(uint8_t slot)
+{
+    int newest = -1;
+    for (int p = 0; p < FLASH_LOOP_PAGES; p++) {
+        const LoopPage* lp = loop_page(p);
+        if (lp->magic == LOOP_MAGIC && lp->slot == slot) newest = p;
+    }
+    return newest;
+}
+
+bool flash_load_loop(uint8_t slot, LoopData* out)
+{
+    int p = loop_newest(slot);
+    if (p < 0) return false;
+    *out = loop_page(p)->loop;
+    return true;
+}
+
+void flash_save_loop(uint8_t slot, const LoopData* loop)
+{
+    static uint8_t buffer[FLASH_PAGE_SIZE * FLASH_LOOP_SLOTS];
+    memset(buffer, 0xFF, sizeof buffer);
+    LoopPage* page = (LoopPage*)buffer;
+    page->magic = LOOP_MAGIC;
+    page->slot  = slot;
+    memset(page->reserved, 0, sizeof page->reserved);
+    page->loop  = *loop;
+
+    // After the last page in use; a half-written page can't be programmed over.
+    int next = 0;
+    for (int p = 0; p < FLASH_LOOP_PAGES; p++)
+        if (!page_blank(p)) next = p + 1;
+
+    int pages = 1;
+    bool erase = next >= FLASH_LOOP_PAGES;
+    if (erase) {
+        // Keep the newest page of every other slot.
+        for (uint8_t s = 0; s < FLASH_LOOP_SLOTS; s++) {
+            int p = loop_newest(s);
+            if (s == slot || p < 0) continue;
+            memcpy(buffer + pages * FLASH_PAGE_SIZE, loop_page(p), FLASH_PAGE_SIZE);
+            pages++;
+        }
+        next = 0;
+    }
+
+    uint32_t ints = save_and_disable_interrupts();
+    multicore_lockout_start_blocking();
+    if (erase) flash_range_erase(FLASH_LOOP_OFFSET, FLASH_SECTOR_SIZE);
+    flash_range_program(FLASH_LOOP_OFFSET + next * FLASH_PAGE_SIZE, buffer, pages * FLASH_PAGE_SIZE);
+    multicore_lockout_end_blocking();
+    restore_interrupts(ints);
+}
+
+void flash_clear_loops(void)
+{
+    uint32_t ints = save_and_disable_interrupts();
+    multicore_lockout_start_blocking();
+    flash_range_erase(FLASH_LOOP_OFFSET, FLASH_SECTOR_SIZE);
+    multicore_lockout_end_blocking();
+    restore_interrupts(ints);
+}

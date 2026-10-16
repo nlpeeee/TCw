@@ -19,6 +19,7 @@
 #include "Rendering/Graphics.h"
 #include "Timing/Scheduler.h"
 #include "Timing/MidiClock.h"
+#include "Timing/Looper.h"
 #include "pico/critical_section.h"
 #include <string.h>
 #include <stdio.h>
@@ -153,7 +154,7 @@ void arp_task(void)
 
     critical_section_enter_blocking(&tc_app_lock);
     if (!active) { critical_section_exit(&tc_app_lock); return; }
-    if (!tc_app.arp_latch && tc_key_states[held_key]) {
+    if (!tc_app.arp_latch && tc_key_states[held_key] && !looper_holds(held_key)) {
         // Latch was turned off while no key was held.
         stop_locked();
         critical_section_exit(&tc_app_lock);
@@ -229,8 +230,9 @@ void arp_update() {}
 void arp_key_down(uint8_t key)
 {
     critical_section_enter_blocking(&tc_app_lock);
-    if (tc_app.arp_latch && active && held_key == key) {
-        // Pressing the latched chord again stops it.
+    if (tc_app.arp_latch && active && held_key == key && !looper_injecting()) {
+        // Pressing the latched chord again stops it. A loop that plays the
+        // same chord twice in a row keeps it going.
         stop_locked();
     } else {
         load_chord(key);
@@ -267,6 +269,13 @@ void arp_button_down(uint8_t button)
 void arp_button_up(uint8_t button) {}
 
 bool arp_is_playing(void) { return active; }
+
+void arp_stop(void)
+{
+    critical_section_enter_blocking(&tc_app_lock);
+    if (active) stop_locked();
+    critical_section_exit(&tc_app_lock);
+}
 
 void arp_trill_down(float pos, float size)
 {
