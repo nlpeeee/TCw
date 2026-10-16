@@ -7,7 +7,8 @@ Press a button, slide a finger along the touch bar, and a full chord comes out t
 - 🎹 **Chords, not notes.** Seven green keys play the seven chords of your key, from simple triads to lush five-note voicings.
 - 👆 **Hold and slide.** Hold a button and slide along the bar to change key, chord set or chord size, and hear a preview as you go.
 - 🎶 **Many ways to play.** Strum it, arpeggiate it, roll it, or add a bass note underneath.
-- 💾 **Ready out of the box.** Seven starter song memories come ready to play, and your settings save themselves.
+- 🔁 **Loop it.** Tap B4 to record a chord progression, tap again to loop it, then play over the top.
+- 💾 **Ready out of the box.** Seven starter song memories come ready to play, each with a demo loop, and your settings save themselves.
 - 🔌 **Plays anything.** Connects to any synth, DAW or phone over USB, Bluetooth or MIDI.
 - 🛠️ **Open and hackable.** Built on the open-source [Touchord](https://github.com/dovker/Touchord) and runs on a Raspberry Pi Pico 2W.
 
