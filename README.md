@@ -1,6 +1,6 @@
 # PicoChord
 
-PicoChord is a pocket chord instrument for people who don’t play an instrument. Press a button, slide a finger along the touch bar, and you get a full chord that fits the key you picked, so there are no wrong notes to hit. Hold a button and slide to change key, chord set or chord size. Strum it, arpeggiate it, add a bass note, or tap a button to record a loop and play over the top of it. Your settings are saved automatically, and the starter memories come ready to play. It connects to any synth, DAW or phone over USB, Bluetooth or MIDI. It’s built on the open-source Touchord and runs on a Raspberry Pi Pico 2W.
+PicoChord is a pocket chord instrument for people who don’t play an instrument, or who want something to pick up and play with. Press a button, slide a finger along the touch bar, and you get a full chord that fits the key you picked, so there are no wrong notes to hit. Hold a button and slide to change key, chord set or chord size. Strum it, arpeggiate it, add a bass note, or tap a button to record a loop and play over the top of it. Your settings are saved automatically, and the starter memories come ready to play. It connects to any synth, DAW or phone over USB, Bluetooth or MIDI. It’s built on the open-source Touchord and runs on a Raspberry Pi Pico 2W.
 It's just a prototype. Thanks
 
 ![External](https://github.com/nlpeeee/TCw/blob/main/img/external.jpeg)
